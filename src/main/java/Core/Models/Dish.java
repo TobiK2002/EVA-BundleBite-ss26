@@ -1,6 +1,12 @@
 package Core.Models;
 
-public class Dish {
+import java.util.UUID;
 
+public class Dish {
+    UUID id;
+    UUID restaurantId;
+    String name;
+    String description;
+    double price;
 
 }
