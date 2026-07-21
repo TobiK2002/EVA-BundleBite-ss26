@@ -3,7 +3,7 @@ package Core.Models.exceptions;
 public class UserException extends RuntimeException{
     public static final String invalidEmail = "Invalid email";
     public static final String userDoesNotExist = "User does not exist";
-    public static final String invalidName = "Invalid username";
+    public static final String invalidName = "Invalid name";
     public static final String invalidAdress = "Invalid adress";
 
 
