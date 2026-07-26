@@ -4,13 +4,15 @@ import Core.Models.Address;
 import Core.Models.User;
 import Core.Models.exceptions.UserException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UserService {
 
-    private final Map<UUID, User> UsersById = new ConcurrentHashMap<>();
+    private final Map<UUID, User> usersById = new ConcurrentHashMap<>();
 
     public User createUser(String name, String email, String address) {
         UUID id = UUID.randomUUID();
@@ -25,12 +27,23 @@ public class UserService {
     }
 
     public User getUserById(UUID id) throws UserException {
-        User user = UsersById.get(id);
+        User user = usersById.get(id);
         if (user == null) {
             throw UserException.userDoesNotExist();
         }
 
         return clone(user);
+    }
+    public List<User> getAllUsers() throws UserException {
+        List<User> allUsers = new ArrayList<>();
+        for(UUID userId : usersById.keySet()){
+            try {
+                allUsers.add(getUserById(userId));
+            } catch (UserException userException){
+                System.out.println("Fehler beim Ziehen eines Users");
+            }
+        }
+        return allUsers;
     }
 
     public void updateUser(User updatedUser) throws UserException {
@@ -39,10 +52,14 @@ public class UserService {
     }
 
     public void deleteUser(UUID id) throws UserException {
-        User user = UsersById.remove(id);
+        User user = usersById.remove(id);
         if (user == null) {
             throw UserException.userDoesNotExist();
         }
+    }
+
+    public void deleteAllUsers(){
+        usersById.clear();
     }
 
     private void validateUser(User user) {
@@ -74,7 +91,7 @@ public class UserService {
 
     private void saveUser(User user) throws UserException {
         validateUser(user);
-        UsersById.put(user.getId(), clone(user));
+        usersById.put(user.getId(), clone(user));
     }
 
     private User clone(User user) {

@@ -35,6 +35,20 @@ public Address getAddress() {
     return address;
 }
 
+public Double getMinOrderValue() {
+    return minOrderValue;
+}
+
+public void setName(String name) {
+    this.name = name;
+}
+
+public void setAddress(String address) {
+    this.address = Address.fromString(address);
+}
+public void setMinOrderValue(Double minOrderValue) {
+    this.minOrderValue = minOrderValue;
+}
 }
 
 
