@@ -49,7 +49,7 @@ class UserServiceTest {
             assertNotNull(user.getId());
             assertEquals(name, user.getName());
             assertEquals(email, user.getEmail());
-            assertEquals(address, user.getAddress());
+            assertEquals(address, user.getAddress().toString());
             assertEquals("04109", user.getAddress().getPostalCode());
             assertEquals("Leipzig", user.getAddress().getCity());
         }
@@ -121,8 +121,8 @@ class UserServiceTest {
             String invalidAddress = "Leipzig";
 
             // Act & Assert
-            UserException exception = assertThrows(
-                    UserException.class,
+            AddressException exception = assertThrows(
+                    AddressException.class,
                     () -> userService.createUser(name, email, invalidAddress)
             );
             assertEquals("Invalid address", exception.getMessage());
@@ -137,11 +137,11 @@ class UserServiceTest {
             String invalidAddress = "Beispielstraße 24 4109 Leipzig";
 
             // Act & Assert
-            UserException exception = assertThrows(
-                    UserException.class,
+            AddressException exception = assertThrows(
+                    AddressException.class,
                     () -> userService.createUser(name, email, invalidAddress)
             );
-            assertEquals("Invalid address", exception.getMessage());
+            assertEquals("Invalid postal code", exception.getMessage());
         }
     }
 
