@@ -3,6 +3,7 @@ package toja.bundlebite.services;
 import static org.junit.jupiter.api.Assertions.*;
 
 import Core.Models.User;
+import Core.Models.exceptions.AddressException;
 import Core.Models.exceptions.UserException;
 import Core.Services.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,17 +39,19 @@ class UserServiceTest {
             // Arrange
             String name = "Max Mustermann";
             String email = "max.mustermann@gmx.de";
-            String adress = "Beispielstraße 24 04109 Leipzig";
+            String address = "Beispielstraße 24 04109 Leipzig";
 
             // Act
-            User user = userService.createUser(name, email, adress);
+            User user = userService.createUser(name, email, address);
 
             // Assert
             assertNotNull(user);
             assertNotNull(user.getId());
             assertEquals(name, user.getName());
             assertEquals(email, user.getEmail());
-            assertEquals(adress, user.getAdress());
+            assertEquals(address, user.getAddress());
+            assertEquals("04109", user.getAddress().getPostalCode());
+            assertEquals("Leipzig", user.getAddress().getCity());
         }
 
         @Test
@@ -57,12 +60,12 @@ class UserServiceTest {
             // Arrange
             String name = "Albert";
             String email = "max.mustermann@gmx.de";
-            String adress = "Beispielstraße 24 04109 Leipzig";
+            String address = "Beispielstraße 24 04109 Leipzig";
 
             // Act & Assert
             UserException exception = assertThrows(
                     UserException.class,
-                    () -> userService.createUser(name, email, adress)
+                    () -> userService.createUser(name, email, address)
             );
             assertEquals("Invalid name", exception.getMessage());
         }
@@ -73,7 +76,7 @@ class UserServiceTest {
             // Arrange
             String name = "test user";
             String invalidEmail = "invalid-email";
-            String adress = "Beispielstraße 24 04109 Leipzig";
+            String address = "Beispielstraße 24 04109 Leipzig";
 
             // Act & Assert
             UserException exception = assertThrows(
@@ -82,7 +85,7 @@ class UserServiceTest {
                             userService.createUser(
                                     name,
                                     invalidEmail,
-                                    adress
+                                    address
                             )
             );
             assertEquals("Invalid email", exception.getMessage());
@@ -94,7 +97,7 @@ class UserServiceTest {
             // Arrange
             String username = "test user";
             String invalidEmail = "test@@example.com";
-            String adress = "Beispielstraße 24 04109 Leipzig";
+            String address = "Beispielstraße 24 04109 Leipzig";
 
             // Act & Assert
             UserException exception = assertThrows(
@@ -103,7 +106,7 @@ class UserServiceTest {
                             userService.createUser(
                                     username,
                                     invalidEmail,
-                                    adress
+                                    address
                             )
             );
             assertEquals("Invalid email", exception.getMessage());
@@ -115,14 +118,14 @@ class UserServiceTest {
             // Arrange
             String name = "Max Mustermann";
             String email = "max.mustermann@gmx.de";
-            String invalidAdress = "Leipzig";
+            String invalidAddress = "Leipzig";
 
             // Act & Assert
             UserException exception = assertThrows(
                     UserException.class,
-                    () -> userService.createUser(name, email, invalidAdress)
+                    () -> userService.createUser(name, email, invalidAddress)
             );
-            assertEquals("Invalid adress", exception.getMessage());
+            assertEquals("Invalid address", exception.getMessage());
         }
 
         @Test
@@ -131,14 +134,14 @@ class UserServiceTest {
             // Arrange
             String name = "Max Mustermann";
             String email = "max.mustermann@gmx.de";
-            String invalidAdress = "Beispielstraße 24 4109 Leipzig";
+            String invalidAddress = "Beispielstraße 24 4109 Leipzig";
 
             // Act & Assert
             UserException exception = assertThrows(
                     UserException.class,
-                    () -> userService.createUser(name, email, invalidAdress)
+                    () -> userService.createUser(name, email, invalidAddress)
             );
-            assertEquals("Invalid adress", exception.getMessage());
+            assertEquals("Invalid address", exception.getMessage());
         }
     }
 
@@ -157,7 +160,7 @@ class UserServiceTest {
             assertEquals(testUser.getId(), foundUser.getId());
             assertEquals(testUser.getName(), foundUser.getName());
             assertEquals(testUser.getEmail(), foundUser.getEmail());
-            assertEquals(testUser.getAdress(), foundUser.getAdress());
+            assertEquals(testUser.getAddress(), foundUser.getAddress());
         }
 
         @Test
@@ -209,7 +212,7 @@ class UserServiceTest {
             assertEquals(updatedUser.getId(), foundUser.getId());
             assertEquals(updatedUser.getName(), foundUser.getName());
             assertEquals(updatedUser.getEmail(), foundUser.getEmail());
-            assertEquals(updatedUser.getAdress(), foundUser.getAdress());
+            assertEquals(updatedUser.getAddress(), foundUser.getAddress());
         }
 
         @Test
@@ -273,21 +276,26 @@ class UserServiceTest {
         @DisplayName("Should throw exception when updating user with invalid address")
         void shouldThrowExceptionWhenUpdatingUserWithInvalidAddress() {
             // Arrange
-            User updatedUser = new User(
-                    testUser.getId(),
-                    "Erika Musterfrau",
-                    "erika.musterfrau@gmx.de",
-                    "Leipzig"
-            );
+            String invalidAddress = "Leipzig";
 
             // Act & Assert
-            UserException exception = assertThrows(
-                    UserException.class,
-                    () -> userService.updateUser(updatedUser)
+            AddressException exception = assertThrows(
+                    AddressException.class,
+                    () -> {
+                        User updatedUser = new User(
+                                testUser.getId(),
+                                "Erika Musterfrau",
+                                "erika.musterfrau@gmx.de",
+                                invalidAddress
+                        );
+
+                        userService.updateUser(updatedUser);
+                    }
             );
-            assertEquals("Invalid adress", exception.getMessage());
+            assertEquals("Invalid address", exception.getMessage());
         }
     }
+
 
     @Nested
     @DisplayName("Delete User Tests")
