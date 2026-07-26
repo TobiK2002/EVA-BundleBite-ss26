@@ -18,7 +18,10 @@ public class User {
     }
 
     public User(UUID id, String name, String email, String address) {
-        this(id, name, email, Address.fromString(address));
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.address = Address.fromString(address);
     }
 
 
