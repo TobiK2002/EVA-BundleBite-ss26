@@ -74,12 +74,14 @@ public class RestaurantService {
         if (restaurant == null) {
             throw RestaurantException.restaurantDoesNotExist();
         }
-        //Alle zugehörigen Dishes Löschen
+        for (UUID dishId : restaurant.getAllDishIds()) {
+            dishService.deleteDish(dishId);
+        }
     }
 
     public void deleteAllRestaurants() {
         restaurantsById.clear();
-        //Alle Dishes löschen
+        dishService.deleteAllDishes();
     }
 
     private void validateRestaurant(Restaurant restaurant) {
@@ -117,6 +119,8 @@ public class RestaurantService {
 
         );
     }
+// Es gibt kein separates addDish im RestaurantService,
+//weil ein Dish immer direkt für ein Restaurant erstellt wird.
 
     public Dish createDishForRestaurant(
             UUID restaurantId,

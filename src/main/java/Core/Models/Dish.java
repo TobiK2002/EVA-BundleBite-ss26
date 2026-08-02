@@ -9,7 +9,7 @@ public class Dish {
     String name;
     String description;
     double price;
-    ArrayList<String> ingredients;
+    ArrayList<String> ingredients = new ArrayList<>();
 
     public Dish(UUID id, UUID restaurantId, String name, String description, double price, ArrayList<String> ingredients) {
         this.id = id;

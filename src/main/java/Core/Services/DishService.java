@@ -70,12 +70,19 @@ public class DishService {
         dishesById.remove(dishId);
     }
 
+    public void deleteAllDishes() {
+        dishesById.clear();
+    }
+
     public Dish getDishByID (UUID id) throws DishException{
         if (id == null) {
             throw DishException.dishDoesNotExist();
         }
 
         Dish requestedDish = dishesById.get(id);
+        if (requestedDish == null) {
+            throw DishException.dishDoesNotExist();
+        }
         return cloneDish(requestedDish);
     }
 
