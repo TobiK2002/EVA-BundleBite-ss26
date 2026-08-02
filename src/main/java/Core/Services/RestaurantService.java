@@ -47,8 +47,8 @@ public class RestaurantService {
             throw RestaurantException.restaurantDoesNotExist();
         }
 
-        //DishListe wird vom Original übernommen. diese soll nicht durch UpdateRestaurant modifiziert
-        //werden sondern durch spezielle add/drop dish funktionen
+        //DishListe wird vom Original/Alten Restaurant übernommen. Die Dishes sollen nicht durch UpdateRestaurant modifiziert
+        //werden sondern durch spezielle add/drop dish funktionen auf dem spezifischen Restaurant Objekt
         updatedRestaurant.dropAllDishes();;
         for (UUID id : original.getAllDishIds()) {
             updatedRestaurant.addDish(id);
@@ -146,7 +146,7 @@ public class RestaurantService {
         Restaurant restaurant = restaurantsById.get(updatedDish.getRestaurantId());
 
         if (!restaurant.getAllDishIds().contains(updatedDish.getId())) {
-            throw DishException.restaurantDoesNotExist();
+            throw DishException.dishDoesNotExist();
         }
 
         dishService.updateDish(updatedDish);
@@ -163,6 +163,7 @@ public class RestaurantService {
     public Dish getDish(UUID dishId) {
         return dishService.getDishByID(dishId);
     }
+
     public List<Dish> getALlDishesForRestaurant(UUID restaurantId) {
         Restaurant referencedRestaurant = getRestaurantById(restaurantId);
         List<Dish> result = new ArrayList<>();
