@@ -39,14 +39,6 @@ public class Restaurant {
         this.dishes.addAll(dishes);
     }
 
-    public Restaurant(UUID id, String name, String address, Double minOrderValue, List<UUID> dishes) {
-        this.id = id;
-        this.name = name;
-        this.address = Address.fromString(address);
-        this.minOrderValue = minOrderValue;
-        this.dishes.addAll(dishes);
-    }
-
 
     public UUID getId() {return id;
     }

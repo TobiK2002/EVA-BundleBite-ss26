@@ -7,6 +7,7 @@ public class OrderEntry {
     UUID userId;
     UUID dishId;
     UUID groupOrderId;
+    long sumPrice;
 
     int quantity;
 }

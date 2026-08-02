@@ -74,10 +74,12 @@ public class RestaurantService {
         if (restaurant == null) {
             throw RestaurantException.restaurantDoesNotExist();
         }
+        //Alle zugehörigen Dishes Löschen
     }
 
     public void deleteAllRestaurants() {
         restaurantsById.clear();
+        //Alle Dishes löschen
     }
 
     private void validateRestaurant(Restaurant restaurant) {
