@@ -45,7 +45,7 @@ public class DishService {
             UUID restaurantId,
             String name,
             String description,
-            double price,
+            long price,
             ArrayList<String> ingredients
     ) {
         UUID id = UUID.randomUUID();

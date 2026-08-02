@@ -126,7 +126,7 @@ public class RestaurantService {
             UUID restaurantId,
             String name,
             String description,
-            double price,
+            long price,
             ArrayList<String> ingredients
     ) throws RestaurantException {
         if (restaurantsById.containsKey(restaurantId)) {

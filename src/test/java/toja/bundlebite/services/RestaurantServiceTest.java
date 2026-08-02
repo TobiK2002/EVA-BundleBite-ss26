@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import Core.Models.Restaurant;
 import Core.Models.exceptions.AddressException;
 import Core.Models.exceptions.RestaurantException;
+import Core.Services.DishService;
 import Core.Services.RestaurantService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +21,8 @@ class RestaurantServiceTest {
 
     @BeforeEach
     void setUp() {
-        restaurantService = new RestaurantService();
+        DishService dishService = new DishService();
+        restaurantService = new RestaurantService(dishService);
         testRestaurant = restaurantService.createRestaurant(
                 "Pizza Roma",
                 "Beispielstraße 24 04109 Leipzig",

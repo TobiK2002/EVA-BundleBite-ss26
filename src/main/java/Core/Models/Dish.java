@@ -8,10 +8,10 @@ public class Dish {
     private final UUID restaurantId;
     String name;
     String description;
-    double price;
+    long price;
     ArrayList<String> ingredients = new ArrayList<>();
 
-    public Dish(UUID id, UUID restaurantId, String name, String description, double price, ArrayList<String> ingredients) {
+    public Dish(UUID id, UUID restaurantId, String name, String description, long price, ArrayList<String> ingredients) {
         this.id = id;
         this.restaurantId = restaurantId;
         this.name = name;
@@ -39,7 +39,7 @@ public class Dish {
         return description;
     }
 
-    public double getPrice() {
+    public long getPrice() {
         return price;
     }
     public ArrayList<String> getIngredients() {
@@ -54,7 +54,7 @@ public class Dish {
         this.description = description;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(long price) {
         this.price = price;
     }
 
