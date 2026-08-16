@@ -1,11 +1,7 @@
 package Core.Services;
 
-import Core.Models.Address;
-import Core.Models.Dish;
 import Core.Models.OrderEntry;
-import Core.Models.Restaurant;
 import Core.Models.exceptions.OrderEntryException;
-import Core.Models.exceptions.RestaurantException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,23 +11,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class OrderEntryService {
     private final Map<UUID, OrderEntry> orderEntriesById = new ConcurrentHashMap<>();
-    private final DishService dishService;
-    private final UserService userService;
-    private final RestaurantService restaurantService;
 
 
-    public OrderEntryService(DishService dishService, UserService userService, RestaurantService restaurantService) {
-        this.dishService = dishService;
-        this.userService = userService;
-        this.restaurantService = restaurantService;
-    }
-
-    public OrderEntry createOrderEntry(UUID userId, UUID dishId, int quantity) {
+    public OrderEntry createOrderEntry(UUID userId, UUID dishId,String snapshotDishName, double snapshotDishPrice, int quantity) {
         UUID id = UUID.randomUUID();
-        Dish referencedDish = dishService.getDishByID(dishId);
-        String snapshotDishName = referencedDish.getName();
-        long snapshotDishPrice = referencedDish.getPrice();
-        long totalPrice = quantity * referencedDish.getPrice();
+
+        double totalPrice = quantity * snapshotDishPrice;
 
         OrderEntry entry = new OrderEntry(id, userId, dishId, quantity, totalPrice, snapshotDishName, snapshotDishPrice);
         saveOrderEntry(entry);
@@ -77,18 +62,7 @@ public class OrderEntryService {
         orderEntriesById.clear();
     }
     private void saveOrderEntry(OrderEntry orderEntry) throws OrderEntryException {
-        validateOrderEntry(orderEntry);
         orderEntriesById.put(orderEntry.getId(), clone(orderEntry));
-    }
-
-    private void validateOrderEntry(OrderEntry orderEntry) throws OrderEntryException {
-        if (orderEntry.getQuantity() < 0) {
-            throw OrderEntryException.quantityMustBePositive();
-        }
-        if (orderEntry.getSumPrice() < 0) {
-            throw OrderEntryException.priceMustBePositive();
-        }
-
     }
 
     private OrderEntry clone(OrderEntry orderEntry) {

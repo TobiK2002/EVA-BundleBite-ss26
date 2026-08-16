@@ -1,0 +1,186 @@
+package Core.Services;
+
+import Core.Models.Dish;
+import Core.Models.GroupOrder;
+import Core.Models.OrderEntry;
+import Core.Models.exceptions.DishException;
+import Core.Models.exceptions.GroupOrderException;
+import Core.Models.exceptions.OrderEntryException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class GroupOrderService {
+    private final Map<UUID, GroupOrder> groupOrdersById = new ConcurrentHashMap<>();
+    private final RestaurantService restaurantService;
+    private final UserService userService;
+    private final OrderEntryService orderEntryService;
+
+    public GroupOrderService(
+            RestaurantService restaurantService,
+            UserService userService,
+            OrderEntryService orderEntryService
+    ) {
+        this.restaurantService = restaurantService;
+        this.userService = userService;
+        this.orderEntryService = orderEntryService;
+    }
+
+    public GroupOrder createGroupOrder(UUID restaurantId, UUID creatorUserId, int expiresAt) {
+        UUID id = UUID.randomUUID();
+        GroupOrder groupOrder = new GroupOrder(id, restaurantId, creatorUserId, expiresAt);
+        saveGroupOrder(groupOrder);
+        return groupOrder;
+    }
+
+    public GroupOrder getGroupOrderById(UUID id) {
+        GroupOrder groupOrder = groupOrdersById.get(id);
+        if (groupOrder == null) {
+            throw GroupOrderException.GroupOrderDoesNotExist();
+        }
+
+        return cloneGroupOrder(groupOrder);
+    }
+
+    public List<GroupOrder> getAllGroupOrders() {
+        List<GroupOrder> allGroupOrders = new ArrayList<>();
+        for (UUID groupOrderId : groupOrdersById.keySet()) {
+            try {
+                allGroupOrders.add(getGroupOrderById(groupOrderId));
+            } catch (GroupOrderException groupOrderException) {
+                System.out.println("Fehler beim Ziehen einer GroupOrder");
+            }
+        }
+        return allGroupOrders;
+    }
+
+    public void deleteGroupOrder(UUID id) {
+        GroupOrder groupOrder = groupOrdersById.remove(id);
+        if (groupOrder == null) {
+            throw GroupOrderException.GroupOrderDoesNotExist();
+        }
+
+        for (UUID orderEntryId : groupOrder.getAllOrderEntryIds()) {
+            orderEntryService.deleteOrderEntry(orderEntryId);
+        }
+    }
+
+    public void deleteAllGroupOrders() {
+        groupOrdersById.clear();
+        orderEntryService.deleteAllOrderEntries();
+    }
+
+    public OrderEntry createOrderEntryForGroupOrder(UUID groupOrderId, UUID userId, UUID dishId, int quantity) {
+        GroupOrder groupOrder = getGroupOrderById(groupOrderId);
+        validateOrderEntryData(groupOrder, userId, dishId, quantity);
+
+        Dish dish = restaurantService.getDish(dishId);
+        OrderEntry orderEntry = orderEntryService.createOrderEntry(
+                userId,
+                dishId,
+                dish.getName(),
+                dish.getPrice(),
+                quantity
+        );
+
+        groupOrder.addOrderEntry(orderEntry.getId());
+        saveGroupOrder(groupOrder);
+        return orderEntry;
+    }
+
+    public OrderEntry getOrderEntry(UUID orderEntryId) {
+        return orderEntryService.getOrderEntryById(orderEntryId);
+    }
+
+    public List<OrderEntry> getAllOrderEntriesForGroupOrder(UUID groupOrderId) {
+        GroupOrder groupOrder = getGroupOrderById(groupOrderId);
+        List<OrderEntry> orderEntries = new ArrayList<>();
+
+        for (UUID orderEntryId : groupOrder.getAllOrderEntryIds()) {
+            orderEntries.add(orderEntryService.getOrderEntryById(orderEntryId));
+        }
+
+        return orderEntries;
+    }
+
+    public void updateOrderEntry(UUID groupOrderId, UUID orderEntryId, int quantity) {
+        GroupOrder groupOrder = getGroupOrderById(groupOrderId);
+        if (!groupOrder.getAllOrderEntryIds().contains(orderEntryId)) {
+            throw GroupOrderException.OrderEntryNotFound();
+        }
+
+        OrderEntry existingOrderEntry = orderEntryService.getOrderEntryById(orderEntryId);
+        validateOrderEntryData(
+                groupOrder,
+                existingOrderEntry.getUserId(),
+                existingOrderEntry.getDishId(),
+                quantity
+        );
+
+        Dish dish = restaurantService.getDish(existingOrderEntry.getDishId());
+        OrderEntry updatedOrderEntry = new OrderEntry(
+                orderEntryId,
+                existingOrderEntry.getUserId(),
+                existingOrderEntry.getDishId(),
+                quantity,
+                quantity * dish.getPrice(),
+                dish.getName(),
+                dish.getPrice()
+        );
+
+        orderEntryService.updateOrderEntry(updatedOrderEntry);
+    }
+
+    public void deleteOrderEntry(UUID groupOrderId, UUID orderEntryId) {
+        GroupOrder groupOrder = getGroupOrderById(groupOrderId);
+        if (!groupOrder.getAllOrderEntryIds().contains(orderEntryId)) {
+            throw GroupOrderException.OrderEntryNotFound();
+        }
+
+        groupOrder.dropOrderEntry(orderEntryId);
+        orderEntryService.deleteOrderEntry(orderEntryId);
+        saveGroupOrder(groupOrder);
+    }
+
+    private void validateGroupOrder(GroupOrder groupOrder) {
+        userService.getUserById(groupOrder.getCreatorUserId());
+        restaurantService.getRestaurantById(groupOrder.getRestaurantId());
+
+        if (groupOrder.getExpiresAt() <= 0) {
+            throw GroupOrderException.InvalidExpirationTime();
+        }
+    }
+
+    private void validateOrderEntryData(GroupOrder groupOrder, UUID userId, UUID dishId, int quantity) {
+        if (quantity < 0) {
+            throw OrderEntryException.quantityMustBePositive();
+        }
+
+        userService.getUserById(userId);
+
+        Dish dish = restaurantService.getDish(dishId);
+        if (!dish.getRestaurantId().equals(groupOrder.getRestaurantId())) {
+            throw DishException.dishDoesNotExist();
+        }
+    }
+
+    private void saveGroupOrder(GroupOrder groupOrder) {
+        validateGroupOrder(groupOrder);
+        groupOrdersById.put(groupOrder.getId(), cloneGroupOrder(groupOrder));
+    }
+
+
+
+    private GroupOrder cloneGroupOrder(GroupOrder groupOrder) {
+        return new GroupOrder(
+                groupOrder.getId(),
+                groupOrder.getRestaurantId(),
+                groupOrder.getCreatorUserId(),
+                groupOrder.getExpiresAt(),
+                groupOrder.getAllOrderEntryIds()
+        );
+    }
+}

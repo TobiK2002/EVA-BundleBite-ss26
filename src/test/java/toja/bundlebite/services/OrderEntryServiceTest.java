@@ -2,344 +2,296 @@ package toja.bundlebite.services;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import Core.Models.Dish;
 import Core.Models.OrderEntry;
-import Core.Models.Restaurant;
-import Core.Models.User;
-import Core.Models.exceptions.DishException;
 import Core.Models.exceptions.OrderEntryException;
-import Core.Services.DishService;
 import Core.Services.OrderEntryService;
-import Core.Services.RestaurantService;
-import Core.Services.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 class OrderEntryServiceTest {
 
-    private DishService dishService;
-    private UserService userService;
-    private RestaurantService restaurantService;
     private OrderEntryService orderEntryService;
-
-    private User testUser;
-    private Restaurant testRestaurant;
-    private Dish testDish;
+    private UUID testUserId;
+    private UUID testDishId;
     private OrderEntry testOrderEntry;
 
     @BeforeEach
     void setUp() {
-        dishService = new DishService();
-        userService = new UserService();
-        restaurantService = new RestaurantService(dishService);
-        orderEntryService = new OrderEntryService(dishService, userService, restaurantService);
+        orderEntryService = new OrderEntryService();
+        testUserId = UUID.randomUUID();
+        testDishId = UUID.randomUUID();
+        testOrderEntry = createTestOrderEntry();
+    }
 
-        testUser = userService.createUser(
-                "Max Mustermann",
-                "max.mustermann@gmx.de",
-                "Beispielstraße 24 04109 Leipzig"
+    @Test
+    @DisplayName("Should create valid order entry")
+    void shouldCreateValidOrderEntry() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        UUID dishId = UUID.randomUUID();
+        String snapshotDishName = "Pizza Margherita";
+        double snapshotDishPrice = 899;
+        int quantity = 3;
+
+        // Act
+        OrderEntry orderEntry = orderEntryService.createOrderEntry(
+                userId,
+                dishId,
+                snapshotDishName,
+                snapshotDishPrice,
+                quantity
         );
 
-        testRestaurant = restaurantService.createRestaurant(
-                "Pizzeria Napoli",
-                "Restaurantstraße 5 04109 Leipzig",
-                10.0
+        // Assert
+        assertNotNull(orderEntry);
+        assertNotNull(orderEntry.getId());
+        assertEquals(userId, orderEntry.getUserId());
+        assertEquals(dishId, orderEntry.getDishId());
+        assertEquals(snapshotDishName, orderEntry.getSnapshotDishName());
+        assertEquals(snapshotDishPrice, orderEntry.getSnapshotDishPrice());
+        assertEquals(quantity, orderEntry.getQuantity());
+        assertEquals(snapshotDishPrice * quantity, orderEntry.getSumPrice());
+    }
+
+    @Test
+    @DisplayName("Should get order entry by id")
+    void shouldGetOrderEntryById() {
+        // Act
+        OrderEntry foundOrderEntry = orderEntryService.getOrderEntryById(testOrderEntry.getId());
+
+        // Assert
+        assertNotNull(foundOrderEntry);
+        assertEquals(testOrderEntry.getId(), foundOrderEntry.getId());
+        assertEquals(testOrderEntry.getUserId(), foundOrderEntry.getUserId());
+        assertEquals(testOrderEntry.getDishId(), foundOrderEntry.getDishId());
+        assertEquals(testOrderEntry.getQuantity(), foundOrderEntry.getQuantity());
+        assertEquals(testOrderEntry.getSumPrice(), foundOrderEntry.getSumPrice());
+        assertEquals(testOrderEntry.getSnapshotDishName(), foundOrderEntry.getSnapshotDishName());
+        assertEquals(testOrderEntry.getSnapshotDishPrice(), foundOrderEntry.getSnapshotDishPrice());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when order entry does not exist")
+    void shouldThrowExceptionWhenOrderEntryDoesNotExist() {
+        // Arrange
+        UUID unknownId = UUID.randomUUID();
+
+        // Act & Assert
+        OrderEntryException exception = assertThrows(
+                OrderEntryException.class,
+                () -> orderEntryService.getOrderEntryById(unknownId)
+        );
+        assertEquals("Referenced OrderEntry does not exist", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should return a copy of the order entry")
+    void shouldReturnCopyOfOrderEntry() {
+        // Act
+        OrderEntry foundOrderEntry = orderEntryService.getOrderEntryById(testOrderEntry.getId());
+
+        // Assert
+        assertNotSame(testOrderEntry, foundOrderEntry);
+        assertEquals(testOrderEntry.getId(), foundOrderEntry.getId());
+    }
+
+    @Test
+    @DisplayName("Should get all order entries")
+    void shouldGetAllOrderEntries() {
+        // Arrange
+        OrderEntry anotherOrderEntry = orderEntryService.createOrderEntry(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "Pasta Napoli",
+                799,
+                1
         );
 
-        ArrayList<String> ingredients = new ArrayList<>();
-        ingredients.add("Tomate");
-        ingredients.add("Mozzarella");
+        // Act
+        List<OrderEntry> orderEntries = orderEntryService.getAllOrderEntries();
 
-        testDish = restaurantService.createDishForRestaurant(
-                testRestaurant.getId(),
+        // Assert
+        assertEquals(2, orderEntries.size());
+        assertTrue(
+                orderEntries.stream()
+                        .anyMatch(orderEntry ->
+                                orderEntry.getId().equals(testOrderEntry.getId())
+                        )
+        );
+        assertTrue(
+                orderEntries.stream()
+                        .anyMatch(orderEntry ->
+                                orderEntry.getId().equals(anotherOrderEntry.getId())
+                        )
+        );
+    }
+
+    @Test
+    @DisplayName("Should return empty list when no order entries exist")
+    void shouldReturnEmptyListWhenNoOrderEntriesExist() {
+        // Arrange
+        orderEntryService.deleteAllOrderEntries();
+
+        // Act
+        List<OrderEntry> orderEntries = orderEntryService.getAllOrderEntries();
+
+        // Assert
+        assertNotNull(orderEntries);
+        assertTrue(orderEntries.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should return copies of all order entries")
+    void shouldReturnCopiesOfAllOrderEntries() {
+        // Act
+        List<OrderEntry> orderEntries = orderEntryService.getAllOrderEntries();
+
+        // Assert
+        assertEquals(1, orderEntries.size());
+        assertNotSame(testOrderEntry, orderEntries.get(0));
+        assertEquals(testOrderEntry.getId(), orderEntries.get(0).getId());
+    }
+
+    @Test
+    @DisplayName("Should update existing order entry")
+    void shouldUpdateExistingOrderEntry() {
+        // Arrange
+        OrderEntry updatedOrderEntry = new OrderEntry(
+                testOrderEntry.getId(),
+                testOrderEntry.getUserId(),
+                testOrderEntry.getDishId(),
+                5,
+                4495,
                 "Pizza Margherita",
-                "Klassische Pizza mit Tomate und Mozzarella",
-                800,
-                ingredients
+                899
         );
 
-        testOrderEntry = orderEntryService.createOrderEntry(testUser.getId(), testDish.getId(), 2);
+        // Act
+        orderEntryService.updateOrderEntry(updatedOrderEntry);
+
+        // Assert
+        OrderEntry foundOrderEntry = orderEntryService.getOrderEntryById(testOrderEntry.getId());
+        assertEquals(updatedOrderEntry.getId(), foundOrderEntry.getId());
+        assertEquals(updatedOrderEntry.getUserId(), foundOrderEntry.getUserId());
+        assertEquals(updatedOrderEntry.getDishId(), foundOrderEntry.getDishId());
+        assertEquals(updatedOrderEntry.getQuantity(), foundOrderEntry.getQuantity());
+        assertEquals(updatedOrderEntry.getSumPrice(), foundOrderEntry.getSumPrice());
+        assertEquals(updatedOrderEntry.getSnapshotDishName(), foundOrderEntry.getSnapshotDishName());
+        assertEquals(updatedOrderEntry.getSnapshotDishPrice(), foundOrderEntry.getSnapshotDishPrice());
     }
 
-    @Nested
-    @DisplayName("Create OrderEntry Tests")
-    class CreateOrderEntryTests {
+    @Test
+    @DisplayName("Should throw exception when updating non existing order entry")
+    void shouldThrowExceptionWhenUpdatingNonExistingOrderEntry() {
+        // Arrange
+        OrderEntry unknownOrderEntry = new OrderEntry(
+                UUID.randomUUID(),
+                testUserId,
+                testDishId,
+                1,
+                899,
+                "Pizza Margherita",
+                899
+        );
 
-        @Test
-        @DisplayName("Should create valid OrderEntry")
-        void shouldCreateValidOrderEntry() {
-            // Arrange
-            int quantity = 3;
-
-            // Act
-            OrderEntry entry = orderEntryService.createOrderEntry(testUser.getId(), testDish.getId(), quantity);
-
-            // Assert
-            assertNotNull(entry);
-            assertNotNull(entry.getId());
-            assertEquals(testUser.getId(), entry.getUserId());
-            assertEquals(testDish.getId(), entry.getDishId());
-            assertEquals(quantity, entry.getQuantity());
-            assertEquals(testDish.getName(), entry.getSnapshotDishName());
-            assertEquals(testDish.getPrice(), entry.getSnapshotDishPrice());
-            assertEquals(testDish.getPrice() * quantity, entry.getSumPrice());
-        }
-
-        @Test
-        @DisplayName("Should throw exception when dish does not exist")
-        void shouldThrowExceptionWhenDishDoesNotExist() {
-            // Arrange
-            UUID unknownDishId = UUID.randomUUID();
-
-            // Act & Assert
-            DishException exception = assertThrows(
-                    DishException.class,
-                    () -> orderEntryService.createOrderEntry(testUser.getId(), unknownDishId, 1)
-            );
-            assertEquals("Referenced Dish does not exist", exception.getMessage());
-        }
-
-        @Test
-        @DisplayName("Should throw exception for negative quantity")
-        void shouldThrowExceptionForNegativeQuantity() {
-            // Act & Assert
-            OrderEntryException exception = assertThrows(
-                    OrderEntryException.class,
-                    () -> orderEntryService.createOrderEntry(testUser.getId(), testDish.getId(), -1)
-            );
-            assertEquals("Quantity must be positive", exception.getMessage());
-        }
-
-        @Test
-        @DisplayName("Should allow quantity of zero")
-        void shouldAllowQuantityOfZero() {
-            // Act
-            OrderEntry entry = orderEntryService.createOrderEntry(testUser.getId(), testDish.getId(), 0);
-
-            // Assert
-            assertNotNull(entry);
-            assertEquals(0, entry.getQuantity());
-            assertEquals(0, entry.getSumPrice());
-        }
+        // Act & Assert
+        OrderEntryException exception = assertThrows(
+                OrderEntryException.class,
+                () -> orderEntryService.updateOrderEntry(unknownOrderEntry)
+        );
+        assertEquals("Referenced OrderEntry does not exist", exception.getMessage());
     }
 
-    @Nested
-    @DisplayName("Get OrderEntry Tests")
-    class GetOrderEntryTests {
+    @Test
+    @DisplayName("Should delete existing order entry")
+    void shouldDeleteExistingOrderEntry() {
+        // Act
+        orderEntryService.deleteOrderEntry(testOrderEntry.getId());
 
-        @Test
-        @DisplayName("Should get order entry by id")
-        void shouldGetOrderEntryById() {
-            // Act
-            OrderEntry foundEntry = orderEntryService.getOrderEntryById(testOrderEntry.getId());
-
-            // Assert
-            assertNotNull(foundEntry);
-            assertEquals(testOrderEntry.getId(), foundEntry.getId());
-            assertEquals(testOrderEntry.getUserId(), foundEntry.getUserId());
-            assertEquals(testOrderEntry.getDishId(), foundEntry.getDishId());
-            assertEquals(testOrderEntry.getQuantity(), foundEntry.getQuantity());
-            assertEquals(testOrderEntry.getSumPrice(), foundEntry.getSumPrice());
-        }
-
-        @Test
-        @DisplayName("Should throw exception when order entry does not exist")
-        void shouldThrowExceptionWhenOrderEntryDoesNotExist() {
-            // Arrange
-            UUID unknownId = UUID.randomUUID();
-
-            // Act & Assert
-            OrderEntryException exception = assertThrows(
-                    OrderEntryException.class,
-                    () -> orderEntryService.getOrderEntryById(unknownId)
-            );
-            assertEquals("Referenced OrderEntry does not exist", exception.getMessage());
-        }
-
-        @Test
-        @DisplayName("Should return a copy of the order entry")
-        void shouldReturnCopyOfOrderEntry() {
-            // Act
-            OrderEntry foundEntry = orderEntryService.getOrderEntryById(testOrderEntry.getId());
-
-            // Assert
-            assertNotSame(testOrderEntry, foundEntry);
-            assertEquals(testOrderEntry.getId(), foundEntry.getId());
-        }
-
-        @Test
-        @DisplayName("Should get all order entries")
-        void shouldGetAllOrderEntries() {
-            // Arrange
-            orderEntryService.createOrderEntry(testUser.getId(), testDish.getId(), 1);
-
-            // Act
-            List<OrderEntry> allEntries = orderEntryService.getAllOrderEntries();
-
-            // Assert
-            assertEquals(2, allEntries.size());
-        }
+        // Assert
+        OrderEntryException exception = assertThrows(
+                OrderEntryException.class,
+                () -> orderEntryService.getOrderEntryById(testOrderEntry.getId())
+        );
+        assertEquals("Referenced OrderEntry does not exist", exception.getMessage());
     }
 
-    @Nested
-    @DisplayName("Update OrderEntry Tests")
-    class UpdateOrderEntryTests {
+    @Test
+    @DisplayName("Should throw exception when deleting non existing order entry")
+    void shouldThrowExceptionWhenDeletingNonExistingOrderEntry() {
+        // Arrange
+        UUID unknownId = UUID.randomUUID();
 
-        @Test
-        @DisplayName("Should update existing order entry")
-        void shouldUpdateExistingOrderEntry() {
-            // Arrange
-            OrderEntry updatedEntry = new OrderEntry(
-                    testOrderEntry.getId(),
-                    testOrderEntry.getUserId(),
-                    testOrderEntry.getDishId(),
-                    5,
-                    5 * testDish.getPrice(),
-                    testDish.getName(),
-                    testDish.getPrice()
-            );
-
-            // Act
-            orderEntryService.updateOrderEntry(updatedEntry);
-
-            // Assert
-            OrderEntry foundEntry = orderEntryService.getOrderEntryById(testOrderEntry.getId());
-            assertEquals(updatedEntry.getQuantity(), foundEntry.getQuantity());
-            assertEquals(updatedEntry.getSumPrice(), foundEntry.getSumPrice());
-        }
-
-        @Test
-        @DisplayName("Should throw exception when updating non existing order entry")
-        void shouldThrowExceptionWhenUpdatingNonExistingOrderEntry() {
-            // Arrange
-            OrderEntry unknownEntry = new OrderEntry(
-                    UUID.randomUUID(),
-                    testUser.getId(),
-                    testDish.getId(),
-                    1,
-                    testDish.getPrice(),
-                    testDish.getName(),
-                    testDish.getPrice()
-            );
-
-            // Act & Assert
-            OrderEntryException exception = assertThrows(
-                    OrderEntryException.class,
-                    () -> orderEntryService.updateOrderEntry(unknownEntry)
-            );
-            assertEquals("Referenced OrderEntry does not exist", exception.getMessage());
-        }
-
-        @Test
-        @DisplayName("Should throw exception when updating order entry with negative quantity")
-        void shouldThrowExceptionWhenUpdatingOrderEntryWithNegativeQuantity() {
-            // Arrange
-            OrderEntry invalidEntry = new OrderEntry(
-                    testOrderEntry.getId(),
-                    testOrderEntry.getUserId(),
-                    testOrderEntry.getDishId(),
-                    -2,
-                    testDish.getPrice(),
-                    testDish.getName(),
-                    testDish.getPrice()
-            );
-
-            // Act & Assert
-            OrderEntryException exception = assertThrows(
-                    OrderEntryException.class,
-                    () -> orderEntryService.updateOrderEntry(invalidEntry)
-            );
-            assertEquals("Quantity must be positive", exception.getMessage());
-        }
-
-        @Test
-        @DisplayName("Should throw exception when updating order entry with negative sum price")
-        void shouldThrowExceptionWhenUpdatingOrderEntryWithNegativeSumPrice() {
-            // Arrange
-            OrderEntry invalidEntry = new OrderEntry(
-                    testOrderEntry.getId(),
-                    testOrderEntry.getUserId(),
-                    testOrderEntry.getDishId(),
-                    2,
-                    -100,
-                    testDish.getName(),
-                    testDish.getPrice()
-            );
-
-            // Act & Assert
-            OrderEntryException exception = assertThrows(
-                    OrderEntryException.class,
-                    () -> orderEntryService.updateOrderEntry(invalidEntry)
-            );
-            assertEquals("Price must be positive", exception.getMessage());
-        }
+        // Act & Assert
+        OrderEntryException exception = assertThrows(
+                OrderEntryException.class,
+                () -> orderEntryService.deleteOrderEntry(unknownId)
+        );
+        assertEquals("Referenced OrderEntry does not exist", exception.getMessage());
     }
 
-    @Nested
-    @DisplayName("Delete OrderEntry Tests")
-    class DeleteOrderEntryTests {
+    @Test
+    @DisplayName("Should not delete another order entry")
+    void shouldNotDeleteAnotherOrderEntry() {
+        // Arrange
+        OrderEntry anotherOrderEntry = orderEntryService.createOrderEntry(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "Pasta Napoli",
+                799,
+                1
+        );
 
-        @Test
-        @DisplayName("Should delete existing order entry")
-        void shouldDeleteExistingOrderEntry() {
-            // Act
-            orderEntryService.deleteOrderEntry(testOrderEntry.getId());
+        // Act
+        orderEntryService.deleteOrderEntry(testOrderEntry.getId());
 
-            // Assert
-            OrderEntryException exception = assertThrows(
-                    OrderEntryException.class,
-                    () -> orderEntryService.getOrderEntryById(testOrderEntry.getId())
-            );
-            assertEquals("Referenced OrderEntry does not exist", exception.getMessage());
-        }
+        // Assert
+        OrderEntry foundOrderEntry = orderEntryService.getOrderEntryById(anotherOrderEntry.getId());
+        assertNotNull(foundOrderEntry);
+        assertEquals(anotherOrderEntry.getId(), foundOrderEntry.getId());
+    }
 
-        @Test
-        @DisplayName("Should throw exception when deleting non existing order entry")
-        void shouldThrowExceptionWhenDeletingNonExistingOrderEntry() {
-            // Arrange
-            UUID unknownId = UUID.randomUUID();
+    @Test
+    @DisplayName("Should delete all order entries")
+    void shouldDeleteAllOrderEntries() {
+        // Arrange
+        orderEntryService.createOrderEntry(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "Pasta Napoli",
+                799,
+                1
+        );
 
-            // Act & Assert
-            OrderEntryException exception = assertThrows(
-                    OrderEntryException.class,
-                    () -> orderEntryService.deleteOrderEntry(unknownId)
-            );
-            assertEquals("Referenced OrderEntry does not exist", exception.getMessage());
-        }
+        // Act
+        orderEntryService.deleteAllOrderEntries();
 
-        @Test
-        @DisplayName("Should not delete another order entry")
-        void shouldNotDeleteAnotherOrderEntry() {
-            // Arrange
-            OrderEntry anotherEntry = orderEntryService.createOrderEntry(testUser.getId(), testDish.getId(), 1);
+        // Assert
+        assertTrue(orderEntryService.getAllOrderEntries().isEmpty());
+    }
 
-            // Act
-            orderEntryService.deleteOrderEntry(testOrderEntry.getId());
+    @Test
+    @DisplayName("Should not throw exception when deleting all order entries from empty service")
+    void shouldNotThrowExceptionWhenDeletingAllOrderEntriesFromEmptyService() {
+        // Arrange
+        orderEntryService.deleteAllOrderEntries();
 
-            // Assert
-            OrderEntry foundEntry = orderEntryService.getOrderEntryById(anotherEntry.getId());
-            assertNotNull(foundEntry);
-            assertEquals(anotherEntry.getId(), foundEntry.getId());
-        }
+        // Act & Assert
+        assertDoesNotThrow(() -> orderEntryService.deleteAllOrderEntries());
+        assertTrue(orderEntryService.getAllOrderEntries().isEmpty());
+    }
 
-        @Test
-        @DisplayName("Should delete all order entries")
-        void shouldDeleteAllOrderEntries() {
-            // Arrange
-            orderEntryService.createOrderEntry(testUser.getId(), testDish.getId(), 1);
-
-            // Act
-            orderEntryService.deleteAllOrderEntries();
-
-            // Assert
-            List<OrderEntry> allEntries = orderEntryService.getAllOrderEntries();
-            assertTrue(allEntries.isEmpty());
-        }
+    private OrderEntry createTestOrderEntry() {
+        return orderEntryService.createOrderEntry(
+                testUserId,
+                testDishId,
+                "Pizza Margherita",
+                899,
+                2
+        );
     }
 }

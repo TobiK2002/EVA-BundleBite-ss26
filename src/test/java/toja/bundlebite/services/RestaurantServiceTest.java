@@ -2,8 +2,10 @@ package toja.bundlebite.services;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import Core.Models.Dish;
 import Core.Models.Restaurant;
 import Core.Models.exceptions.AddressException;
+import Core.Models.exceptions.DishException;
 import Core.Models.exceptions.RestaurantException;
 import Core.Services.DishService;
 import Core.Services.RestaurantService;
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -450,6 +453,214 @@ class RestaurantServiceTest {
             assertNotNull(foundRestaurant);
             assertEquals(anotherRestaurant.getId(), foundRestaurant.getId());
         }
+    }
+
+    @Test
+    @DisplayName("Should create dish for existing restaurant")
+    void shouldCreateDishForExistingRestaurant() {
+            // Arrange
+            ArrayList<String> ingredients = new ArrayList<>(List.of("Teig", "Tomaten", "Kaese"));
+
+            // Act
+            Dish dish = restaurantService.createDishForRestaurant(
+                    testRestaurant.getId(),
+                    "Pizza Margherita",
+                    "Klassische Pizza mit Tomaten und Kaese",
+                    899,
+                    ingredients
+            );
+
+            // Assert
+            assertNotNull(dish);
+            assertNotNull(dish.getId());
+            assertEquals(testRestaurant.getId(), dish.getRestaurantId());
+            assertEquals("Pizza Margherita", dish.getName());
+            assertEquals("Klassische Pizza mit Tomaten und Kaese", dish.getDescription());
+            assertEquals(899, dish.getPrice());
+            assertEquals(ingredients, dish.getIngredients());
+
+            Restaurant restaurant = restaurantService.getRestaurantById(testRestaurant.getId());
+            assertTrue(restaurant.getAllDishIds().contains(dish.getId()));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when creating dish for non existing restaurant")
+    void shouldThrowExceptionWhenCreatingDishForNonExistingRestaurant() {
+            // Arrange
+            UUID unknownRestaurantId = UUID.randomUUID();
+            ArrayList<String> ingredients = new ArrayList<>(List.of("Teig", "Tomaten"));
+
+            // Act & Assert
+            RestaurantException exception = assertThrows(
+                    RestaurantException.class,
+                    () -> restaurantService.createDishForRestaurant(
+                            unknownRestaurantId,
+                            "Pizza Margherita",
+                            "Klassische Pizza",
+                            899,
+                            ingredients
+                    )
+            );
+            assertEquals("Restaurant does not exist", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should get dish by id")
+    void shouldGetDishById() {
+            // Arrange
+            Dish createdDish = createTestDish();
+
+            // Act
+            Dish foundDish = restaurantService.getDish(createdDish.getId());
+
+            // Assert
+            assertNotNull(foundDish);
+            assertNotSame(createdDish, foundDish);
+            assertEquals(createdDish.getId(), foundDish.getId());
+            assertEquals(createdDish.getRestaurantId(), foundDish.getRestaurantId());
+            assertEquals(createdDish.getName(), foundDish.getName());
+            assertEquals(createdDish.getDescription(), foundDish.getDescription());
+            assertEquals(createdDish.getPrice(), foundDish.getPrice());
+            assertEquals(createdDish.getIngredients(), foundDish.getIngredients());
+    }
+
+    @Test
+    @DisplayName("Should get all dishes for restaurant")
+    void shouldGetAllDishesForRestaurant() {
+            // Arrange
+            Dish pizza = createTestDish();
+            Dish pasta = restaurantService.createDishForRestaurant(
+                    testRestaurant.getId(),
+                    "Pasta Napoli",
+                    "Pasta mit Tomatensauce",
+                    799,
+                    new ArrayList<>(List.of("Pasta", "Tomaten"))
+            );
+
+            // Act
+            List<Dish> dishes = restaurantService.getALlDishesForRestaurant(testRestaurant.getId());
+
+            // Assert
+            assertEquals(2, dishes.size());
+            assertTrue(dishes.stream().anyMatch(dish -> dish.getId().equals(pizza.getId())));
+            assertTrue(dishes.stream().anyMatch(dish -> dish.getId().equals(pasta.getId())));
+    }
+
+    @Test
+    @DisplayName("Should update dish that belongs to restaurant")
+    void shouldUpdateDishThatBelongsToRestaurant() {
+            // Arrange
+            Dish dish = createTestDish();
+            Dish updatedDish = new Dish(
+                    dish.getId(),
+                    dish.getRestaurantId(),
+                    "Pizza Funghi",
+                    "Pizza mit Champignons",
+                    999,
+                    new ArrayList<>(List.of("Teig", "Tomaten", "Kaese", "Champignons"))
+            );
+
+            // Act
+            restaurantService.updateDish(updatedDish);
+
+            // Assert
+            Dish foundDish = restaurantService.getDish(dish.getId());
+            assertEquals(updatedDish.getId(), foundDish.getId());
+            assertEquals(updatedDish.getRestaurantId(), foundDish.getRestaurantId());
+            assertEquals(updatedDish.getName(), foundDish.getName());
+            assertEquals(updatedDish.getDescription(), foundDish.getDescription());
+            assertEquals(updatedDish.getPrice(), foundDish.getPrice());
+            assertEquals(updatedDish.getIngredients(), foundDish.getIngredients());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when updating dish that is not assigned to restaurant")
+    void shouldThrowExceptionWhenUpdatingDishThatIsNotAssignedToRestaurant() {
+            // Arrange
+            Dish dish = createTestDish();
+            Dish unknownDish = new Dish(
+                    UUID.randomUUID(),
+                    dish.getRestaurantId(),
+                    "Pizza Salami",
+                    "Pizza mit Salami",
+                    999,
+                    new ArrayList<>(List.of("Teig", "Tomaten", "Salami"))
+            );
+
+            // Act & Assert
+            DishException exception = assertThrows(
+                    DishException.class,
+                    () -> restaurantService.updateDish(unknownDish)
+            );
+            assertEquals("Referenced Dish does not exist", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should delete dish and remove it from restaurant")
+    void shouldDeleteDishAndRemoveItFromRestaurant() {
+            // Arrange
+            Dish dish = createTestDish();
+
+            // Act
+            restaurantService.deleteDish(dish.getId());
+
+            // Assert
+            DishException exception = assertThrows(
+                    DishException.class,
+                    () -> restaurantService.getDish(dish.getId())
+            );
+            assertEquals("Referenced Dish does not exist", exception.getMessage());
+
+            Restaurant restaurant = restaurantService.getRestaurantById(testRestaurant.getId());
+            assertFalse(restaurant.getAllDishIds().contains(dish.getId()));
+    }
+
+    @Test
+    @DisplayName("Should delete dishes when deleting restaurant")
+    void shouldDeleteDishesWhenDeletingRestaurant() {
+            // Arrange
+            Dish dish = createTestDish();
+
+            // Act
+            restaurantService.deleteRestaurant(testRestaurant.getId());
+
+            // Assert
+            DishException exception = assertThrows(
+                    DishException.class,
+                    () -> restaurantService.getDish(dish.getId())
+            );
+            assertEquals("Referenced Dish does not exist", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should keep assigned dishes when updating restaurant")
+    void shouldKeepAssignedDishesWhenUpdatingRestaurant() {
+            // Arrange
+            Dish dish = createTestDish();
+            Restaurant updatedRestaurant = new Restaurant(
+                    testRestaurant.getId(),
+                    "Pasta Milano",
+                    "Neue Strasse 12 04109 Leipzig",
+                    25.0
+            );
+            updatedRestaurant.addDish(UUID.randomUUID());
+
+            // Act
+            restaurantService.updateRestaurant(updatedRestaurant);
+
+            // Assert
+            Restaurant restaurant = restaurantService.getRestaurantById(testRestaurant.getId());
+            assertEquals(List.of(dish.getId()), restaurant.getAllDishIds());
+    }
+
+    private Dish createTestDish() {
+        return restaurantService.createDishForRestaurant(
+                testRestaurant.getId(),
+                "Pizza Margherita",
+                "Klassische Pizza mit Tomaten und Kaese",
+                899,
+                new ArrayList<>(List.of("Teig", "Tomaten", "Kaese"))
+        );
     }
 
     @Nested

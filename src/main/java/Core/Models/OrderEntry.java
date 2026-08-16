@@ -8,12 +8,12 @@ public class OrderEntry {
     private final UUID dishId;
     //Snaphot of the price and name of the dish
     private String snapshotDishName;
-    private long snapshotDishPrice;
+    private double snapshotDishPrice;
 
-    long sumPrice;
+    double sumPrice;
     int quantity;
 
-    public OrderEntry(UUID id, UUID userId, UUID dishId, int quantity, long sumPrice, String snapshotDishName, long snapshotDishPrice) {
+    public OrderEntry(UUID id, UUID userId, UUID dishId, int quantity, double sumPrice, String snapshotDishName, double snapshotDishPrice) {
         this.id = id;
         this.userId = userId;
         this.dishId = dishId;
@@ -32,7 +32,7 @@ public class OrderEntry {
     public UUID getDishId() {
         return dishId;
     }
-    public long getSumPrice() {
+    public double getSumPrice() {
         return sumPrice;
     }
     public int getQuantity() {
@@ -41,7 +41,7 @@ public class OrderEntry {
     public String getSnapshotDishName() {
         return snapshotDishName;
     }
-    public long getSnapshotDishPrice() {
+    public double getSnapshotDishPrice() {
         return snapshotDishPrice;
     }
     public void setSnapshotDishName(String snapshotDishName) {
