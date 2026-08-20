@@ -46,7 +46,7 @@ public class RestaurantService {
 
         //DishListe wird vom Original/Alten Restaurant übernommen. Die Dishes sollen nicht durch UpdateRestaurant modifiziert
         //werden sondern durch spezielle add/drop dish funktionen auf dem spezifischen Restaurant Objekt
-        updatedRestaurant.dropAllDishes();;
+        updatedRestaurant.dropAllDishes();
         for (UUID id : original.getAllDishIds()) {
             updatedRestaurant.addDish(id);
         }
