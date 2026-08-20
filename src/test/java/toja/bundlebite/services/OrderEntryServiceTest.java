@@ -15,14 +15,14 @@ import java.util.UUID;
 class OrderEntryServiceTest {
 
     private OrderEntryService orderEntryService;
-    private UUID testUserId;
+    private String testUserEmail;
     private UUID testDishId;
     private OrderEntry testOrderEntry;
 
     @BeforeEach
     void setUp() {
         orderEntryService = new OrderEntryService();
-        testUserId = UUID.randomUUID();
+        testUserEmail = "max.mustermann@gmx.de";
         testDishId = UUID.randomUUID();
         testOrderEntry = createTestOrderEntry();
     }
@@ -31,7 +31,7 @@ class OrderEntryServiceTest {
     @DisplayName("Should create valid order entry")
     void shouldCreateValidOrderEntry() {
         // Arrange
-        UUID userId = UUID.randomUUID();
+        String userEmail = "erika.musterfrau@gmx.de";
         UUID dishId = UUID.randomUUID();
         String snapshotDishName = "Pizza Margherita";
         double snapshotDishPrice = 899;
@@ -39,7 +39,7 @@ class OrderEntryServiceTest {
 
         // Act
         OrderEntry orderEntry = orderEntryService.createOrderEntry(
-                userId,
+                userEmail,
                 dishId,
                 snapshotDishName,
                 snapshotDishPrice,
@@ -49,7 +49,7 @@ class OrderEntryServiceTest {
         // Assert
         assertNotNull(orderEntry);
         assertNotNull(orderEntry.getId());
-        assertEquals(userId, orderEntry.getUserId());
+        assertEquals(userEmail, orderEntry.getUserEmail());
         assertEquals(dishId, orderEntry.getDishId());
         assertEquals(snapshotDishName, orderEntry.getSnapshotDishName());
         assertEquals(snapshotDishPrice, orderEntry.getSnapshotDishPrice());
@@ -66,7 +66,7 @@ class OrderEntryServiceTest {
         // Assert
         assertNotNull(foundOrderEntry);
         assertEquals(testOrderEntry.getId(), foundOrderEntry.getId());
-        assertEquals(testOrderEntry.getUserId(), foundOrderEntry.getUserId());
+        assertEquals(testOrderEntry.getUserEmail(), foundOrderEntry.getUserEmail());
         assertEquals(testOrderEntry.getDishId(), foundOrderEntry.getDishId());
         assertEquals(testOrderEntry.getQuantity(), foundOrderEntry.getQuantity());
         assertEquals(testOrderEntry.getSumPrice(), foundOrderEntry.getSumPrice());
@@ -104,7 +104,7 @@ class OrderEntryServiceTest {
     void shouldGetAllOrderEntries() {
         // Arrange
         OrderEntry anotherOrderEntry = orderEntryService.createOrderEntry(
-                UUID.randomUUID(),
+                testUserEmail,
                 UUID.randomUUID(),
                 "Pasta Napoli",
                 799,
@@ -162,7 +162,7 @@ class OrderEntryServiceTest {
         // Arrange
         OrderEntry updatedOrderEntry = new OrderEntry(
                 testOrderEntry.getId(),
-                testOrderEntry.getUserId(),
+                testOrderEntry.getUserEmail(),
                 testOrderEntry.getDishId(),
                 5,
                 4495,
@@ -176,7 +176,7 @@ class OrderEntryServiceTest {
         // Assert
         OrderEntry foundOrderEntry = orderEntryService.getOrderEntryById(testOrderEntry.getId());
         assertEquals(updatedOrderEntry.getId(), foundOrderEntry.getId());
-        assertEquals(updatedOrderEntry.getUserId(), foundOrderEntry.getUserId());
+        assertEquals(updatedOrderEntry.getUserEmail(), foundOrderEntry.getUserEmail());
         assertEquals(updatedOrderEntry.getDishId(), foundOrderEntry.getDishId());
         assertEquals(updatedOrderEntry.getQuantity(), foundOrderEntry.getQuantity());
         assertEquals(updatedOrderEntry.getSumPrice(), foundOrderEntry.getSumPrice());
@@ -190,7 +190,7 @@ class OrderEntryServiceTest {
         // Arrange
         OrderEntry unknownOrderEntry = new OrderEntry(
                 UUID.randomUUID(),
-                testUserId,
+                testUserEmail,
                 testDishId,
                 1,
                 899,
@@ -238,12 +238,18 @@ class OrderEntryServiceTest {
     @DisplayName("Should not delete another order entry")
     void shouldNotDeleteAnotherOrderEntry() {
         // Arrange
+        String anotherUserEmail = UUID.randomUUID().toString();
+        UUID anotherDishId = UUID.randomUUID();
+        String anotherDishName = "Pasta Napoli";
+        double anotherDishPrice = 799;
+        int anotherQuantity = 1;
+
         OrderEntry anotherOrderEntry = orderEntryService.createOrderEntry(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                "Pasta Napoli",
-                799,
-                1
+                anotherUserEmail,
+                anotherDishId,
+                anotherDishName,
+                anotherDishPrice,
+                anotherQuantity
         );
 
         // Act
@@ -255,12 +261,13 @@ class OrderEntryServiceTest {
         assertEquals(anotherOrderEntry.getId(), foundOrderEntry.getId());
     }
 
+
     @Test
     @DisplayName("Should delete all order entries")
     void shouldDeleteAllOrderEntries() {
         // Arrange
         orderEntryService.createOrderEntry(
-                UUID.randomUUID(),
+                UUID.randomUUID().toString(),
                 UUID.randomUUID(),
                 "Pasta Napoli",
                 799,
@@ -287,7 +294,7 @@ class OrderEntryServiceTest {
 
     private OrderEntry createTestOrderEntry() {
         return orderEntryService.createOrderEntry(
-                testUserId,
+                testUserEmail,
                 testDishId,
                 "Pizza Margherita",
                 899,

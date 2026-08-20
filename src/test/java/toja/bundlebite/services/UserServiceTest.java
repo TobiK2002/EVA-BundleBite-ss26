@@ -11,9 +11,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
-import java.util.UUID;
-
 class UserServiceTest {
 
     private UserService userService;
@@ -46,7 +43,6 @@ class UserServiceTest {
 
             // Assert
             assertNotNull(user);
-            assertNotNull(user.getId());
             assertEquals(name, user.getName());
             assertEquals(email, user.getEmail());
             assertEquals(address, user.getAddress().toString());
@@ -150,14 +146,13 @@ class UserServiceTest {
     class GetUserTests {
 
         @Test
-        @DisplayName("Should get user by id")
-        void shouldGetUserById() {
+        @DisplayName("Should get user by email")
+        void shouldGetUserByEmail() {
             // Act
-            User foundUser = userService.getUserById(testUser.getId());
+            User foundUser = userService.getUserByEmail(testUser.getEmail());
 
             // Assert
             assertNotNull(foundUser);
-            assertEquals(testUser.getId(), foundUser.getId());
             assertEquals(testUser.getName(), foundUser.getName());
             assertEquals(testUser.getEmail(), foundUser.getEmail());
             assertEquals(testUser.getAddress(), foundUser.getAddress());
@@ -167,12 +162,12 @@ class UserServiceTest {
         @DisplayName("Should throw exception when user does not exist")
         void shouldThrowExceptionWhenUserDoesNotExist() {
             // Arrange
-            UUID unknownId = UUID.randomUUID();
+            String unknownEmail = "unknown.user@gmx.de";
 
             // Act & Assert
             UserException exception = assertThrows(
                     UserException.class,
-                    () -> userService.getUserById(unknownId)
+                    () -> userService.getUserByEmail(unknownEmail)
             );
             assertEquals("User does not exist", exception.getMessage());
         }
@@ -181,171 +176,165 @@ class UserServiceTest {
         @DisplayName("Should return a copy of the user")
         void shouldReturnCopyOfUser() {
             // Act
-            User foundUser = userService.getUserById(testUser.getId());
+            User foundUser = userService.getUserByEmail(testUser.getEmail());
 
             // Assert
             assertNotSame(testUser, foundUser);
-            assertEquals(testUser.getId(), foundUser.getId());
-        }
-    }
-
-    @Nested
-    @DisplayName("Update User Tests")
-    class UpdateUserTests {
-
-        @Test
-        @DisplayName("Should update existing user")
-        void shouldUpdateExistingUser() {
-            // Arrange
-            User updatedUser = new User(
-                    testUser.getId(),
-                    "Erika Musterfrau",
-                    "erika.musterfrau@gmx.de",
-                    "Neue Straße 12 04109 Leipzig"
-            );
-
-            // Act
-            userService.updateUser(updatedUser);
-
-            // Assert
-            User foundUser = userService.getUserById(testUser.getId());
-            assertEquals(updatedUser.getId(), foundUser.getId());
-            assertEquals(updatedUser.getName(), foundUser.getName());
-            assertEquals(updatedUser.getEmail(), foundUser.getEmail());
-            assertEquals(updatedUser.getAddress(), foundUser.getAddress());
+            assertEquals(testUser.getEmail(), foundUser.getEmail());
         }
 
-        @Test
-        @DisplayName("Should throw exception when updating non existing user")
-        void shouldThrowExceptionWhenUpdatingNonExistingUser() {
-            // Arrange
-            User unknownUser = new User(
-                    UUID.randomUUID(),
-                    "Erika Musterfrau",
-                    "erika.musterfrau@gmx.de",
-                    "Neue Straße 12 04109 Leipzig"
-            );
 
-            // Act & Assert
-            UserException exception = assertThrows(
-                    UserException.class,
-                    () -> userService.updateUser(unknownUser)
-            );
-            assertEquals("User does not exist", exception.getMessage());
+        @Nested
+        @DisplayName("Update User Tests")
+        class UpdateUserTests {
+
+            @Test
+            @DisplayName("Should update existing user")
+            void shouldUpdateExistingUser() {
+                // Arrange
+                User updatedUser = new User(
+                        "Erika Musterfrau",
+                        "erika.musterfrau@gmx.de",
+                        "Neue Straße 12 04109 Leipzig"
+                );
+
+                // Act
+                userService.updateUser(updatedUser);
+
+                // Assert
+                User foundUser = userService.getUserByEmail(updatedUser.getEmail());
+                assertEquals(updatedUser.getName(), foundUser.getName());
+                assertEquals(updatedUser.getEmail(), foundUser.getEmail());
+                assertEquals(updatedUser.getAddress(), foundUser.getAddress());
+            }
+
+            @Test
+            @DisplayName("Should throw exception when updating non existing user")
+            void shouldThrowExceptionWhenUpdatingNonExistingUser() {
+                // Arrange
+                User unknownUser = new User(
+                        "Erika Musterfrau",
+                        "erika.musterfrau@gmx.de",
+                        "Neue Straße 12 04109 Leipzig"
+                );
+
+                // Act & Assert
+                UserException exception = assertThrows(
+                        UserException.class,
+                        () -> userService.updateUser(unknownUser)
+                );
+                assertEquals("User does not exist", exception.getMessage());
+            }
+
+            @Test
+            @DisplayName("Should throw exception when updating user with invalid email")
+            void shouldThrowExceptionWhenUpdatingUserWithInvalidEmail() {
+                // Arrange
+                User updatedUser = new User(
+                        "Erika Musterfrau",
+                        "invalid-email",
+                        "Neue Straße 12 04109 Leipzig"
+                );
+
+                // Act & Assert
+                UserException exception = assertThrows(
+                        UserException.class,
+                        () -> userService.updateUser(updatedUser)
+                );
+                assertEquals("Invalid email", exception.getMessage());
+            }
+
+            @Test
+            @DisplayName("Should throw exception when updating user with invalid name")
+            void shouldThrowExceptionWhenUpdatingUserWithInvalidName() {
+                // Arrange
+                User updatedUser = new User(
+                        "Erika",
+                        "erika.musterfrau@gmx.de",
+                        "Neue Straße 12 04109 Leipzig"
+                );
+
+                // Act & Assert
+                UserException exception = assertThrows(
+                        UserException.class,
+                        () -> userService.updateUser(updatedUser)
+                );
+                assertEquals("Invalid name", exception.getMessage());
+            }
+
+            @Test
+            @DisplayName("Should throw exception when updating user with invalid address")
+            void shouldThrowExceptionWhenUpdatingUserWithInvalidAddress() {
+                // Arrange
+                String invalidAddress = "Leipzig";
+
+                // Act & Assert
+                AddressException exception = assertThrows(
+                        AddressException.class,
+                        () -> {
+                            User updatedUser = new User(
+                                    "Erika Musterfrau",
+                                    "erika.musterfrau@gmx.de",
+                                    invalidAddress
+                            );
+
+                            userService.updateUser(updatedUser);
+                        }
+                );
+                assertEquals("Invalid address", exception.getMessage());
+            }
         }
 
-        @Test
-        @DisplayName("Should throw exception when updating user with invalid email")
-        void shouldThrowExceptionWhenUpdatingUserWithInvalidEmail() {
-            // Arrange
-            User updatedUser = new User(
-                    testUser.getId(),
-                    "Erika Musterfrau",
-                    "invalid-email",
-                    "Neue Straße 12 04109 Leipzig"
-            );
+        @Nested
+        @DisplayName("Delete User Tests")
+        class DeleteUserTests {
 
-            // Act & Assert
-            UserException exception = assertThrows(
-                    UserException.class,
-                    () -> userService.updateUser(updatedUser)
-            );
-            assertEquals("Invalid email", exception.getMessage());
-        }
+            @Test
+            @DisplayName("Should delete existing user")
+            void shouldDeleteExistingUser() {
+                // Act
+                userService.deleteUser(testUser.getEmail());
 
-        @Test
-        @DisplayName("Should throw exception when updating user with invalid name")
-        void shouldThrowExceptionWhenUpdatingUserWithInvalidName() {
-            // Arrange
-            User updatedUser = new User(
-                    testUser.getId(),
-                    "Erika",
-                    "erika.musterfrau@gmx.de",
-                    "Neue Straße 12 04109 Leipzig"
-            );
+                // Assert
+                UserException exception = assertThrows(
+                        UserException.class,
+                        () -> userService.getUserByEmail(testUser.getEmail())
+                );
+                assertEquals("User does not exist", exception.getMessage());
+            }
 
-            // Act & Assert
-            UserException exception = assertThrows(
-                    UserException.class,
-                    () -> userService.updateUser(updatedUser)
-            );
-            assertEquals("Invalid name", exception.getMessage());
-        }
+            @Test
+            @DisplayName("Should throw exception when deleting non existing user")
+            void shouldThrowExceptionWhenDeletingNonExistingUser() {
+                // Arrange
+                String unknownEmail = "unknown.user@gmx.de";
 
-        @Test
-        @DisplayName("Should throw exception when updating user with invalid address")
-        void shouldThrowExceptionWhenUpdatingUserWithInvalidAddress() {
-            // Arrange
-            String invalidAddress = "Leipzig";
+                // Act & Assert
+                UserException exception = assertThrows(
+                        UserException.class,
+                        () -> userService.deleteUser(unknownEmail)
+                );
+                assertEquals("User does not exist", exception.getMessage());
+            }
 
-            // Act & Assert
-            AddressException exception = assertThrows(
-                    AddressException.class,
-                    () -> {
-                        User updatedUser = new User(
-                                testUser.getId(),
-                                "Erika Musterfrau",
-                                "erika.musterfrau@gmx.de",
-                                invalidAddress
-                        );
+            @Test
+            @DisplayName("Should not delete another user")
+            void shouldNotDeleteAnotherUser() {
+                // Arrange
+                User anotherUser = userService.createUser(
+                        "Erika Musterfrau",
+                        "erika.musterfrau@gmx.de",
+                        "Neue Straße 12 04109 Leipzig"
+                );
 
-                        userService.updateUser(updatedUser);
-                    }
-            );
-            assertEquals("Invalid address", exception.getMessage());
-        }
-    }
+                // Act
+                userService.deleteUser(testUser.getEmail());
 
-
-    @Nested
-    @DisplayName("Delete User Tests")
-    class DeleteUserTests {
-
-        @Test
-        @DisplayName("Should delete existing user")
-        void shouldDeleteExistingUser() {
-            // Act
-            userService.deleteUser(testUser.getId());
-
-            // Assert
-            UserException exception = assertThrows(
-                    UserException.class,
-                    () -> userService.getUserById(testUser.getId())
-            );
-            assertEquals("User does not exist", exception.getMessage());
-        }
-
-        @Test
-        @DisplayName("Should throw exception when deleting non existing user")
-        void shouldThrowExceptionWhenDeletingNonExistingUser() {
-            // Arrange
-            UUID unknownId = UUID.randomUUID();
-
-            // Act & Assert
-            UserException exception = assertThrows(
-                    UserException.class,
-                    () -> userService.deleteUser(unknownId)
-            );
-            assertEquals("User does not exist", exception.getMessage());
-        }
-
-        @Test
-        @DisplayName("Should not delete another user")
-        void shouldNotDeleteAnotherUser() {
-            // Arrange
-            User anotherUser = userService.createUser(
-                    "Erika Musterfrau",
-                    "erika.musterfrau@gmx.de",
-                    "Neue Straße 12 04109 Leipzig"
-            );
-
-            // Act
-            userService.deleteUser(testUser.getId());
-
-            // Assert
-            User foundUser = userService.getUserById(anotherUser.getId());
-            assertNotNull(foundUser);
-            assertEquals(anotherUser.getId(), foundUser.getId());
+                // Assert
+                User foundUser = userService.getUserByEmail(anotherUser.getEmail());
+                assertNotNull(foundUser);
+                assertEquals(anotherUser.getEmail(), foundUser.getEmail());
+            }
         }
     }
 }

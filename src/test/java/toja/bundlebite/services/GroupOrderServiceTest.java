@@ -29,7 +29,6 @@ class GroupOrderServiceTest {
 
     private GroupOrderService groupOrderService;
     private RestaurantService restaurantService;
-    private UserService userService;
     private OrderEntryService orderEntryService;
     private User testUser;
     private Restaurant testRestaurant;
@@ -40,7 +39,7 @@ class GroupOrderServiceTest {
     void setUp() {
         DishService dishService = new DishService();
         restaurantService = new RestaurantService(dishService);
-        userService = new UserService();
+        UserService userService = new UserService();
         orderEntryService = new OrderEntryService();
         groupOrderService = new GroupOrderService(
                 restaurantService,
@@ -63,7 +62,7 @@ class GroupOrderServiceTest {
         testDish = createTestDish();
         testGroupOrder = groupOrderService.createGroupOrder(
                 testRestaurant.getId(),
-                testUser.getId(),
+                testUser.getEmail(),
                 60
         );
     }
@@ -74,7 +73,7 @@ class GroupOrderServiceTest {
         // Act
         GroupOrder groupOrder = groupOrderService.createGroupOrder(
                 testRestaurant.getId(),
-                testUser.getId(),
+                testUser.getEmail(),
                 120
         );
 
@@ -82,7 +81,7 @@ class GroupOrderServiceTest {
         assertNotNull(groupOrder);
         assertNotNull(groupOrder.getId());
         assertEquals(testRestaurant.getId(), groupOrder.getRestaurantId());
-        assertEquals(testUser.getId(), groupOrder.getCreatorUserId());
+        assertEquals(testUser.getEmail(), groupOrder.getCreatorUserEmail());
         assertEquals(120, groupOrder.getExpiresAt());
         assertTrue(groupOrder.getAllOrderEntryIds().isEmpty());
     }
@@ -95,7 +94,7 @@ class GroupOrderServiceTest {
                 RestaurantException.class,
                 () -> groupOrderService.createGroupOrder(
                         UUID.randomUUID(),
-                        testUser.getId(),
+                        testUser.getEmail(),
                         60
                 )
         );
@@ -110,7 +109,7 @@ class GroupOrderServiceTest {
                 UserException.class,
                 () -> groupOrderService.createGroupOrder(
                         testRestaurant.getId(),
-                        UUID.randomUUID(),
+                        UUID.randomUUID().toString(),
                         60
                 )
         );
@@ -125,7 +124,7 @@ class GroupOrderServiceTest {
                 GroupOrderException.class,
                 () -> groupOrderService.createGroupOrder(
                         testRestaurant.getId(),
-                        testUser.getId(),
+                        testUser.getEmail(),
                         0
                 )
         );
@@ -142,7 +141,7 @@ class GroupOrderServiceTest {
         assertNotNull(foundGroupOrder);
         assertEquals(testGroupOrder.getId(), foundGroupOrder.getId());
         assertEquals(testGroupOrder.getRestaurantId(), foundGroupOrder.getRestaurantId());
-        assertEquals(testGroupOrder.getCreatorUserId(), foundGroupOrder.getCreatorUserId());
+        assertEquals(testGroupOrder.getCreatorUserEmail(), foundGroupOrder.getCreatorUserEmail());
         assertEquals(testGroupOrder.getExpiresAt(), foundGroupOrder.getExpiresAt());
     }
 
@@ -174,7 +173,7 @@ class GroupOrderServiceTest {
         // Arrange
         GroupOrder anotherGroupOrder = groupOrderService.createGroupOrder(
                 testRestaurant.getId(),
-                testUser.getId(),
+                testUser.getEmail(),
                 120
         );
 
@@ -254,7 +253,7 @@ class GroupOrderServiceTest {
         // Arrange
         GroupOrder anotherGroupOrder = groupOrderService.createGroupOrder(
                 testRestaurant.getId(),
-                testUser.getId(),
+                testUser.getEmail(),
                 120
         );
 
@@ -273,7 +272,7 @@ class GroupOrderServiceTest {
         // Arrange
         groupOrderService.createGroupOrder(
                 testRestaurant.getId(),
-                testUser.getId(),
+                testUser.getEmail(),
                 120
         );
 
@@ -301,7 +300,7 @@ class GroupOrderServiceTest {
         // Act
         OrderEntry orderEntry = groupOrderService.createOrderEntryForGroupOrder(
                 testGroupOrder.getId(),
-                testUser.getId(),
+                testUser.getEmail(),
                 testDish.getId(),
                 2
         );
@@ -309,7 +308,7 @@ class GroupOrderServiceTest {
         // Assert
         assertNotNull(orderEntry);
         assertNotNull(orderEntry.getId());
-        assertEquals(testUser.getId(), orderEntry.getUserId());
+        assertEquals(testUser.getEmail(), orderEntry.getUserEmail());
         assertEquals(testDish.getId(), orderEntry.getDishId());
         assertEquals(2, orderEntry.getQuantity());
         assertEquals(testDish.getName(), orderEntry.getSnapshotDishName());
@@ -328,7 +327,7 @@ class GroupOrderServiceTest {
                 GroupOrderException.class,
                 () -> groupOrderService.createOrderEntryForGroupOrder(
                         UUID.randomUUID(),
-                        testUser.getId(),
+                        testUser.getEmail(),
                         testDish.getId(),
                         2
                 )
@@ -344,7 +343,7 @@ class GroupOrderServiceTest {
                 UserException.class,
                 () -> groupOrderService.createOrderEntryForGroupOrder(
                         testGroupOrder.getId(),
-                        UUID.randomUUID(),
+                        UUID.randomUUID().toString(),
                         testDish.getId(),
                         2
                 )
@@ -360,7 +359,7 @@ class GroupOrderServiceTest {
                 DishException.class,
                 () -> groupOrderService.createOrderEntryForGroupOrder(
                         testGroupOrder.getId(),
-                        testUser.getId(),
+                        testUser.getEmail(),
                         UUID.randomUUID(),
                         2
                 )
@@ -390,7 +389,7 @@ class GroupOrderServiceTest {
                 DishException.class,
                 () -> groupOrderService.createOrderEntryForGroupOrder(
                         testGroupOrder.getId(),
-                        testUser.getId(),
+                        testUser.getEmail(),
                         anotherDish.getId(),
                         2
                 )
@@ -406,7 +405,7 @@ class GroupOrderServiceTest {
                 OrderEntryException.class,
                 () -> groupOrderService.createOrderEntryForGroupOrder(
                         testGroupOrder.getId(),
-                        testUser.getId(),
+                        testUser.getEmail(),
                         testDish.getId(),
                         -1
                 )
@@ -427,7 +426,7 @@ class GroupOrderServiceTest {
         assertNotNull(foundOrderEntry);
         assertNotSame(orderEntry, foundOrderEntry);
         assertEquals(orderEntry.getId(), foundOrderEntry.getId());
-        assertEquals(orderEntry.getUserId(), foundOrderEntry.getUserId());
+        assertEquals(orderEntry.getUserEmail(), foundOrderEntry.getUserEmail());
         assertEquals(orderEntry.getDishId(), foundOrderEntry.getDishId());
     }
 
@@ -438,7 +437,7 @@ class GroupOrderServiceTest {
         OrderEntry pizza = createTestOrderEntry();
         OrderEntry pasta = groupOrderService.createOrderEntryForGroupOrder(
                 testGroupOrder.getId(),
-                testUser.getId(),
+                testUser.getEmail(),
                 restaurantService.createDishForRestaurant(
                         testRestaurant.getId(),
                         "Pasta Napoli",
@@ -482,7 +481,7 @@ class GroupOrderServiceTest {
     void shouldThrowExceptionWhenUpdatingOrderEntryThatIsNotAssignedToGroupOrder() {
         // Arrange
         OrderEntry unknownOrderEntry = orderEntryService.createOrderEntry(
-                testUser.getId(),
+                testUser.getEmail(),
                 testDish.getId(),
                 testDish.getName(),
                 testDish.getPrice(),
@@ -544,7 +543,7 @@ class GroupOrderServiceTest {
     void shouldThrowExceptionWhenDeletingOrderEntryThatIsNotAssignedToGroupOrder() {
         // Arrange
         OrderEntry unknownOrderEntry = orderEntryService.createOrderEntry(
-                testUser.getId(),
+                testUser.getEmail(),
                 testDish.getId(),
                 testDish.getName(),
                 testDish.getPrice(),
@@ -610,7 +609,7 @@ class GroupOrderServiceTest {
     private OrderEntry createTestOrderEntry() {
         return groupOrderService.createOrderEntryForGroupOrder(
                 testGroupOrder.getId(),
-                testUser.getId(),
+                testUser.getEmail(),
                 testDish.getId(),
                 2
         );
