@@ -4,6 +4,7 @@ import Core.Models.Dish;
 import Core.Models.GroupOrder;
 import Core.Models.OrderEntry;
 import Core.Models.Restaurant;
+import Core.Models.User;
 import Core.Services.DishService;
 import Core.Services.GroupOrderService;
 import Core.Services.OrderEntryService;
@@ -27,6 +28,55 @@ public class BundleBiteController {
 
     private final GroupOrderService groupOrderService =
             new GroupOrderService(restaurantService, userService, orderEntryService);
+
+    // -------------------------
+    // Users
+    // -------------------------
+
+    @PostMapping("/users")
+    public User createUser(@RequestBody CreateUserRequest request) {
+        return userService.createUser(
+                request.name(),
+                request.email(),
+                request.address()
+        );
+    }
+
+    @GetMapping("/users")
+    public List<User> getAllUsers() {
+        return userService.getAllUsers();
+    }
+
+    @GetMapping("/users/{userId}")
+    public User getUserById(@PathVariable UUID userId) {
+        return userService.getUserById(userId);
+    }
+
+    @PutMapping("/users/{userId}")
+    public void updateUser(
+            @PathVariable UUID userId,
+            @RequestBody UpdateUserRequest request
+    ) {
+        User user = new User(
+                userId,
+                request.name(),
+                request.email(),
+                request.address()
+        );
+
+        userService.updateUser(user);
+    }
+
+    @DeleteMapping("/users/{userId}")
+    public void deleteUser(@PathVariable UUID userId) {
+        userService.deleteUser(userId);
+    }
+
+    @DeleteMapping("/users")
+    public void deleteAllUsers() {
+        userService.deleteAllUsers();
+    }
+
 
     // -------------------------
     // Restaurants
@@ -200,6 +250,20 @@ public class BundleBiteController {
     // -------------------------
     // Request-Klassen
     // -------------------------
+
+    public record CreateUserRequest(
+            String name,
+            String email,
+            String address
+    ) {
+    }
+
+    public record UpdateUserRequest(
+            String name,
+            String email,
+            String address
+    ) {
+    }
 
     public record CreateRestaurantRequest(
             String name,
