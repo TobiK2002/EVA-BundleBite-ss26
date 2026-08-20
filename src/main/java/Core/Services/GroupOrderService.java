@@ -117,6 +117,17 @@ public class GroupOrderService {
         return orderEntries;
     }
 
+    public List<OrderEntry> getAllOrderEntriesByGroupOrderByUser(UUID userId, UUID groupOrderId) {
+        List<OrderEntry> allOrderEntries = getAllOrderEntriesForGroupOrder(groupOrderId);
+        List<OrderEntry> orderEntriesByGroupOrderByUser = new ArrayList<>();
+        for (OrderEntry entry : allOrderEntries) {
+            if (entry.getUserId() == userId) {
+                orderEntriesByGroupOrderByUser.add(entry);
+            }
+        }
+        return orderEntriesByGroupOrderByUser;
+    }
+
     public void updateOrderEntry(UUID groupOrderId, UUID orderEntryId, int quantity) {
         GroupOrder groupOrder = getGroupOrderById(groupOrderId);
         if (!groupOrder.getAllOrderEntryIds().contains(orderEntryId)) {
