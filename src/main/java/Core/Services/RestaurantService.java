@@ -8,10 +8,7 @@ import Core.Models.exceptions.DishException;
 import Core.Models.exceptions.RestaurantException;
 import Core.Services.DishService;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -82,6 +79,18 @@ public class RestaurantService {
     public void deleteAllRestaurants() {
         restaurantsById.clear();
         dishService.deleteAllDishes();
+    }
+
+    public List<Restaurant> getAllRestaurantsWithSameCity(String city) {
+        List<Restaurant> allRestaurants = getAllRestaurants();
+        List<Restaurant> restaurantWithSamePostal = new ArrayList<>();
+
+        for (Restaurant entry : allRestaurants) {
+            if (Objects.equals(entry.getAddress().getCity(), city)) {
+                restaurantWithSamePostal.add(entry);
+            }
+        }
+        return restaurantWithSamePostal;
     }
 
     private void validateRestaurant(Restaurant restaurant) {
