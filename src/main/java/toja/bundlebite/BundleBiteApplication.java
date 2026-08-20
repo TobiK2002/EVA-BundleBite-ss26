@@ -3,7 +3,7 @@ package toja.bundlebite;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"toja.bundlebite", "rest"})
 public class BundleBiteApplication {
 
     public static void main(String[] args) {
