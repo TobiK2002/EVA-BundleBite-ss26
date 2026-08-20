@@ -3,14 +3,12 @@ package Core.Services;
 import Core.Models.Dish;
 import Core.Models.GroupOrder;
 import Core.Models.OrderEntry;
+import Core.Models.User;
 import Core.Models.exceptions.DishException;
 import Core.Models.exceptions.GroupOrderException;
 import Core.Models.exceptions.OrderEntryException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GroupOrderService {
@@ -55,6 +53,19 @@ public class GroupOrderService {
             }
         }
         return allGroupOrders;
+    }
+
+    public List<GroupOrder> getAllGroupOrdersWithSamePostalCode(String postal) {
+        List<GroupOrder> allGroupOrders = getAllGroupOrders();
+        List<GroupOrder> allGroupOrdersWithSamePostal = new ArrayList<>();
+
+        for (GroupOrder groupOrder : allGroupOrders) {
+            User owner = userService.getUserById(groupOrder.getCreatorUserId());
+            if (Objects.equals(owner.getAddress().getPostalCode(), postal)) {
+                allGroupOrdersWithSamePostal.add(groupOrder);
+            }
+        }
+        return allGroupOrdersWithSamePostal;
     }
 
     public void deleteGroupOrder(UUID id) {
