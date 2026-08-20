@@ -5,6 +5,7 @@ public class UserException extends RuntimeException{
     public static final String userDoesNotExist = "User does not exist";
     public static final String invalidName = "Invalid name";
     public static final String invalidAddress = "Invalid address";
+    public static final String emailDoesAlreadyExist = "this Email is already occupied";
 
 
     public UserException(String message) {
@@ -15,4 +16,5 @@ public class UserException extends RuntimeException{
     public static UserException userDoesNotExist(){return new UserException(userDoesNotExist);}
     public static UserException invalidName(){return new UserException(invalidName);}
     public static UserException invalidAddress(){return new UserException(invalidAddress);}
+    public static UserException emailDoesAlreadyExist(){return new UserException(emailDoesAlreadyExist);}
 }

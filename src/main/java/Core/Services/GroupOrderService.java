@@ -27,9 +27,9 @@ public class GroupOrderService {
         this.orderEntryService = orderEntryService;
     }
 
-    public GroupOrder createGroupOrder(UUID restaurantId, UUID creatorUserId, int expiresAt) {
+    public GroupOrder createGroupOrder(UUID restaurantId, String creatorUserEmail, int expiresAt) {
         UUID id = UUID.randomUUID();
-        GroupOrder groupOrder = new GroupOrder(id, restaurantId, creatorUserId, expiresAt);
+        GroupOrder groupOrder = new GroupOrder(id, restaurantId, creatorUserEmail, expiresAt);
         saveGroupOrder(groupOrder);
         return groupOrder;
     }
@@ -60,7 +60,7 @@ public class GroupOrderService {
         List<GroupOrder> allGroupOrdersWithSamePostal = new ArrayList<>();
 
         for (GroupOrder groupOrder : allGroupOrders) {
-            User owner = userService.getUserById(groupOrder.getCreatorUserId());
+            User owner = userService.getUserByEmail(groupOrder.getCreatorUserEmail());
             if (Objects.equals(owner.getAddress().getPostalCode(), postal)) {
                 allGroupOrdersWithSamePostal.add(groupOrder);
             }
@@ -84,13 +84,13 @@ public class GroupOrderService {
         orderEntryService.deleteAllOrderEntries();
     }
 
-    public OrderEntry createOrderEntryForGroupOrder(UUID groupOrderId, UUID userId, UUID dishId, int quantity) {
+    public OrderEntry createOrderEntryForGroupOrder(UUID groupOrderId, String userEmail, UUID dishId, int quantity) {
         GroupOrder groupOrder = getGroupOrderById(groupOrderId);
-        validateOrderEntryData(groupOrder, userId, dishId, quantity);
+        validateOrderEntryData(groupOrder, userEmail, dishId, quantity);
 
         Dish dish = restaurantService.getDish(dishId);
         OrderEntry orderEntry = orderEntryService.createOrderEntry(
-                userId,
+                userEmail,
                 dishId,
                 dish.getName(),
                 dish.getPrice(),
@@ -117,11 +117,11 @@ public class GroupOrderService {
         return orderEntries;
     }
 
-    public List<OrderEntry> getAllOrderEntriesByGroupOrderByUser(UUID userId, UUID groupOrderId) {
+    public List<OrderEntry> getAllOrderEntriesByGroupOrderByUser(String userEmail, UUID groupOrderId) {
         List<OrderEntry> allOrderEntries = getAllOrderEntriesForGroupOrder(groupOrderId);
         List<OrderEntry> orderEntriesByGroupOrderByUser = new ArrayList<>();
         for (OrderEntry entry : allOrderEntries) {
-            if (entry.getUserId() == userId) {
+            if (Objects.equals(entry.getUserEmail(), userEmail)) {
                 orderEntriesByGroupOrderByUser.add(entry);
             }
         }
@@ -137,7 +137,7 @@ public class GroupOrderService {
         OrderEntry existingOrderEntry = orderEntryService.getOrderEntryById(orderEntryId);
         validateOrderEntryData(
                 groupOrder,
-                existingOrderEntry.getUserId(),
+                existingOrderEntry.getUserEmail(),
                 existingOrderEntry.getDishId(),
                 quantity
         );
@@ -145,7 +145,7 @@ public class GroupOrderService {
         Dish dish = restaurantService.getDish(existingOrderEntry.getDishId());
         OrderEntry updatedOrderEntry = new OrderEntry(
                 orderEntryId,
-                existingOrderEntry.getUserId(),
+                existingOrderEntry.getUserEmail(),
                 existingOrderEntry.getDishId(),
                 quantity,
                 quantity * dish.getPrice(),
@@ -168,7 +168,7 @@ public class GroupOrderService {
     }
 
     private void validateGroupOrder(GroupOrder groupOrder) {
-        userService.getUserById(groupOrder.getCreatorUserId());
+        userService.getUserByEmail(groupOrder.getCreatorUserEmail());
         restaurantService.getRestaurantById(groupOrder.getRestaurantId());
 
         if (groupOrder.getExpiresAt() <= 0) {
@@ -176,12 +176,12 @@ public class GroupOrderService {
         }
     }
 
-    private void validateOrderEntryData(GroupOrder groupOrder, UUID userId, UUID dishId, int quantity) {
+    private void validateOrderEntryData(GroupOrder groupOrder, String userEmail, UUID dishId, int quantity) {
         if (quantity < 0) {
             throw OrderEntryException.quantityMustBePositive();
         }
 
-        userService.getUserById(userId);
+        userService.getUserByEmail(userEmail);
 
         Dish dish = restaurantService.getDish(dishId);
         if (!dish.getRestaurantId().equals(groupOrder.getRestaurantId())) {
@@ -200,7 +200,7 @@ public class GroupOrderService {
         return new GroupOrder(
                 groupOrder.getId(),
                 groupOrder.getRestaurantId(),
-                groupOrder.getCreatorUserId(),
+                groupOrder.getCreatorUserEmail(),
                 groupOrder.getExpiresAt(),
                 groupOrder.getAllOrderEntryIds()
         );

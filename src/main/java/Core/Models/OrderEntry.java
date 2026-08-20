@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public class OrderEntry {
     private final UUID id;
-    private final UUID userId;
+    private final String userEmail;
     private final UUID dishId;
     //Snaphot of the price and name of the dish
     private String snapshotDishName;
@@ -13,9 +13,9 @@ public class OrderEntry {
     double sumPrice;
     int quantity;
 
-    public OrderEntry(UUID id, UUID userId, UUID dishId, int quantity, double sumPrice, String snapshotDishName, double snapshotDishPrice) {
+    public OrderEntry(UUID id, String userEmail, UUID dishId, int quantity, double sumPrice, String snapshotDishName, double snapshotDishPrice) {
         this.id = id;
-        this.userId = userId;
+        this.userEmail = userEmail;
         this.dishId = dishId;
         this.snapshotDishName = snapshotDishName;
         this.snapshotDishPrice = snapshotDishPrice;
@@ -26,8 +26,8 @@ public class OrderEntry {
     public UUID getId() {
         return id;
     }
-    public UUID getUserId() {
-        return userId;
+    public String getUserEmail() {
+        return userEmail;
     }
     public UUID getDishId() {
         return dishId;

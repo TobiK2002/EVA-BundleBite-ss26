@@ -13,12 +13,12 @@ public class OrderEntryService {
     private final Map<UUID, OrderEntry> orderEntriesById = new ConcurrentHashMap<>();
 
 
-    public OrderEntry createOrderEntry(UUID userId, UUID dishId,String snapshotDishName, double snapshotDishPrice, int quantity) {
+    public OrderEntry createOrderEntry(String userEmail, UUID dishId,String snapshotDishName, double snapshotDishPrice, int quantity) {
         UUID id = UUID.randomUUID();
 
         double totalPrice = quantity * snapshotDishPrice;
 
-        OrderEntry entry = new OrderEntry(id, userId, dishId, quantity, totalPrice, snapshotDishName, snapshotDishPrice);
+        OrderEntry entry = new OrderEntry(id, userEmail, dishId, quantity, totalPrice, snapshotDishName, snapshotDishPrice);
         saveOrderEntry(entry);
         return entry;
     }
@@ -68,7 +68,7 @@ public class OrderEntryService {
     private OrderEntry clone(OrderEntry orderEntry) {
         return new OrderEntry(
                 orderEntry.getId(),
-                orderEntry.getUserId(),
+                orderEntry.getUserEmail(),
                 orderEntry.getDishId(),
                 orderEntry.getQuantity(),
                 orderEntry.getSumPrice(),

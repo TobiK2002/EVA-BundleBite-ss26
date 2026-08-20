@@ -7,30 +7,30 @@ import java.util.UUID;
 public class GroupOrder {
     UUID id;
     UUID restaurantId;
-    UUID creatorUserId;
+    String creatorUserEmail;
     int expiresAt;
     List<UUID> entries = new ArrayList<>();
 
 
-    public GroupOrder(UUID id, UUID restaurantId, UUID creatorUserId, int expiresAt) {
+    public GroupOrder(UUID id, UUID restaurantId, String creatorUserEmail, int expiresAt) {
         this.id = id;
         this.restaurantId = restaurantId;
-        this.creatorUserId = creatorUserId;
+        this.creatorUserEmail = creatorUserEmail;
         this.expiresAt = expiresAt;
     }
 
-    public GroupOrder(UUID id, UUID restaurantId, UUID creatorUserId, int expiresAt, List<UUID> OrderEntries) {
+    public GroupOrder(UUID id, UUID restaurantId, String creatorUserEmail, int expiresAt, List<UUID> OrderEntries) {
         this.id = id;
         this.restaurantId = restaurantId;
-        this.creatorUserId = creatorUserId;
+        this.creatorUserEmail = creatorUserEmail;
         this.expiresAt = expiresAt;
         this.entries.addAll(OrderEntries);
     }
     public UUID getId() {
         return this.id;
     }
-    public UUID getCreatorUserId() {
-        return this.creatorUserId;
+    public String getCreatorUserEmail() {
+        return this.creatorUserEmail;
     }
     public UUID getRestaurantId() {
         return this.restaurantId;

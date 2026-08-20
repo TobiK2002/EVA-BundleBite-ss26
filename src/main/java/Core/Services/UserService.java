@@ -12,13 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class UserService {
 
-    private final Map<UUID, User> usersById = new ConcurrentHashMap<>();
+    private final Map<String, User> usersByEmail = new ConcurrentHashMap<>();
 
-    public User createUser(String name, String email, String address) {
-        UUID id = UUID.randomUUID();
-
+    public User createUser(String name, String email, String address) throws UserException {
+        if (usersByEmail.containsKey(email)) {
+            throw UserException.emailDoesAlreadyExist();
+        }
         try {
-            User user = new User(id, name, email, address);
+            User user = new User( name, email, address);
             saveUser(user);
             return user;
         } catch (IllegalArgumentException exception) {
@@ -26,19 +27,20 @@ public class UserService {
         }
     }
 
-    public User getUserById(UUID id) throws UserException {
-        User user = usersById.get(id);
+    public User getUserByEmail(String email) throws UserException {
+        User user = usersByEmail.get(email);
         if (user == null) {
             throw UserException.userDoesNotExist();
         }
 
         return clone(user);
     }
+
     public List<User> getAllUsers() throws UserException {
         List<User> allUsers = new ArrayList<>();
-        for(UUID userId : usersById.keySet()){
+        for(String email : usersByEmail.keySet()){
             try {
-                allUsers.add(getUserById(userId));
+                allUsers.add(clone(getUserByEmail(email)));
             } catch (UserException userException){
                 System.out.println("Fehler beim Ziehen eines Users");
             }
@@ -51,15 +53,15 @@ public class UserService {
         saveUser(updatedUser);
     }
 
-    public void deleteUser(UUID id) throws UserException {
-        User user = usersById.remove(id);
+    public void deleteUser(String email) throws UserException {
+        User user = usersByEmail.remove(email);
         if (user == null) {
             throw UserException.userDoesNotExist();
         }
     }
 
     public void deleteAllUsers(){
-        usersById.clear();
+        usersByEmail.clear();
     }
 
     private void validateUser(User user) {
@@ -86,17 +88,16 @@ public class UserService {
     }
 
     private void validateUpdatedUser(User updatedUser) {
-        getUserById(updatedUser.getId());
+        getUserByEmail(updatedUser.getEmail());
     }
 
     private void saveUser(User user) throws UserException {
         validateUser(user);
-        usersById.put(user.getId(), clone(user));
+        usersByEmail.put(user.getEmail(), clone(user));
     }
 
     private User clone(User user) {
         return new User(
-                user.getId(),
                 user.getName(),
                 user.getEmail(),
                 new Address(

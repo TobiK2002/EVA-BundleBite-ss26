@@ -47,18 +47,17 @@ public class BundleBiteController {
         return userService.getAllUsers();
     }
 
-    @GetMapping("/users/{userId}")
-    public User getUserById(@PathVariable UUID userId) {
-        return userService.getUserById(userId);
+    @GetMapping("/users/{userEmail}")
+    public User getUserById(@PathVariable String userEmail) {
+        return userService.getUserByEmail(userEmail);
     }
 
-    @PutMapping("/users/{userId}")
+    @PutMapping("/users/{userEmail}")
     public void updateUser(
-            @PathVariable UUID userId,
+            @PathVariable String userEmail,
             @RequestBody UpdateUserRequest request
     ) {
         User user = new User(
-                userId,
                 request.name(),
                 request.email(),
                 request.address()
@@ -67,9 +66,9 @@ public class BundleBiteController {
         userService.updateUser(user);
     }
 
-    @DeleteMapping("/users/{userId}")
-    public void deleteUser(@PathVariable UUID userId) {
-        userService.deleteUser(userId);
+    @DeleteMapping("/users/{userEmail}")
+    public void deleteUser(@PathVariable String userEmail) {
+        userService.deleteUser(userEmail);
     }
 
     @DeleteMapping("/users")
@@ -179,7 +178,7 @@ public class BundleBiteController {
     public GroupOrder createGroupOrder(@RequestBody CreateGroupOrderRequest request) {
         return groupOrderService.createGroupOrder(
                 request.restaurantId(),
-                request.creatorUserId(),
+                request.creatorUserEmail(),
                 request.expiresAt()
         );
     }
@@ -210,7 +209,7 @@ public class BundleBiteController {
     ) {
         return groupOrderService.createOrderEntryForGroupOrder(
                 groupOrderId,
-                request.userId(),
+                request.userEmail(),
                 request.dishId(),
                 request.quantity()
         );
@@ -298,13 +297,13 @@ public class BundleBiteController {
 
     public record CreateGroupOrderRequest(
             UUID restaurantId,
-            UUID creatorUserId,
+            String creatorUserEmail,
             int expiresAt
     ) {
     }
 
     public record CreateOrderEntryRequest(
-            UUID userId,
+            String userEmail,
             UUID dishId,
             int quantity
     ) {
