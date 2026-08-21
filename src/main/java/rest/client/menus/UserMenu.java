@@ -31,8 +31,9 @@ public class UserMenu {
             System.out.println("2. Gerichte eines Restaurants anzeigen");
             System.out.println("3. GroupOrder erstellen");
             System.out.println("4. Alle GroupOrders anzeigen");
-            System.out.println("5. GroupOrder beitreten");
-            System.out.println("6. OrderEntry bearbeiten");
+            System.out.println("5. OrderEntry für GroupOrder erstellen");
+            System.out.println("6. GroupOrder beitreten");
+            System.out.println("7. OrderEntry bearbeiten");
             System.out.println("0. Logout");
             System.out.print("Auswahl: ");
 
@@ -43,8 +44,9 @@ public class UserMenu {
                 case "2" -> showDishesForRestaurant();
                 case "3" -> createGroupOrder();
                 case "4" -> showAllGroupOrders();
-                case "5" -> joinGroupOrder();
-                case "6" -> updateOrderEntry();
+                case "5" -> createOrderEntryForGroupOrder();
+                case "6" -> joinGroupOrder();
+                case "7" -> updateOrderEntry();
                 case "0" -> {
                     this.loggedInUserEmail = null;
                     logout = true;
