@@ -1,5 +1,9 @@
 package rest.client;
 
+
+import rest.client.menus.RestaurantMenu;
+import rest.client.menus.UserMenu;
+import rest.client.ApiClient;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
@@ -14,14 +18,26 @@ import java.util.UUID;
 
 public class ConsoleClient {
 
+
     private static final String BASE_URL = "http://localhost:8080/api";
 
     private final Scanner scanner = new Scanner(System.in);
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final UserMenu userMenu;
+    private final RestaurantMenu restaurantMenu;
+    private final ApiClient apiClient;
 
-    private UUID loggedInUserId;
+
+    private String loggedInUserEmail;
     private UUID loggedInRestaurantId;
+
+    ConsoleClient() {
+        this.apiClient= new ApiClient();
+        this.userMenu= new UserMenu(scanner,apiClient,loggedInUserEmail);
+        this.restaurantMenu= new RestaurantMenu(scanner,apiClient,loggedInRestaurantId);
+
+    }
 
     public void start() {
         boolean running = true;
@@ -70,38 +86,6 @@ public class ConsoleClient {
         }
     }
 
-    private void showUserMenu() {
-        boolean logout = false;
-
-        while (!logout) {
-            System.out.println();
-            System.out.println("User-Menü");
-            System.out.println("1. Alle Restaurants anzeigen");
-            System.out.println("2. Gerichte eines Restaurants anzeigen");
-            System.out.println("3. GroupOrder erstellen");
-            System.out.println("4. Alle GroupOrders anzeigen");
-            System.out.println("5. GroupOrder beitreten");
-            System.out.println("6. OrderEntry bearbeiten");
-            System.out.println("0. Logout");
-            System.out.print("Auswahl: ");
-
-            String input = scanner.nextLine();
-
-            switch (input) {
-                case "1" -> showAllRestaurants();
-                case "2" -> showDishesForRestaurant();
-                case "3" -> createGroupOrder();
-                case "4" -> showAllGroupOrders();
-                case "5" -> joinGroupOrder();
-                case "6" -> updateOrderEntry();
-                case "0" -> {
-                    loggedInUserId = null;
-                    logout = true;
-                }
-                default -> System.out.println("Ungültige Eingabe.");
-            }
-        }
-    }
 
     private void showRestaurantEntryMenu() {
         boolean back = false;
@@ -125,34 +109,6 @@ public class ConsoleClient {
         }
     }
 
-    private void showRestaurantMenu() {
-        boolean logout = false;
-
-        while (!logout) {
-            System.out.println();
-            System.out.println("Restaurant-Menü");
-            System.out.println("1. Eigene Gerichte anzeigen");
-            System.out.println("2. Gericht erstellen");
-            System.out.println("3. Gericht bearbeiten");
-            System.out.println("4. Gericht löschen");
-            System.out.println("0. Logout");
-            System.out.print("Auswahl: ");
-
-            String input = scanner.nextLine();
-
-            switch (input) {
-                case "1" -> showOwnDishes();
-                case "2" -> createDish();
-                case "3" -> updateDish();
-                case "4" -> deleteDish();
-                case "0" -> {
-                    loggedInRestaurantId = null;
-                    logout = true;
-                }
-                default -> System.out.println("Ungültige Eingabe.");
-            }
-        }
-    }
 
     private void createUser() {
         try {
@@ -167,14 +123,15 @@ public class ConsoleClient {
 
             CreateUserRequest request = new CreateUserRequest(name, email, address);
 
-            UserResponse user = post("/users", request, UserResponse.class);
+            UserResponse user = apiClient.post("/users", request, UserResponse.class);
 
-            loggedInUserId = user.id();
+            loggedInUserEmail = user.email;
 
             System.out.println("User wurde erstellt.");
-            System.out.println("Deine User-ID: " + user.id());
+            System.out.println("Deine User-E-Mail: " + user.email());
 
-            showUserMenu();
+            userMenu.showUserMenu();
+
         } catch (Exception exception) {
             System.out.println("User konnte nicht erstellt werden: " + exception.getMessage());
         }
@@ -185,12 +142,13 @@ public class ConsoleClient {
             System.out.print("User-ID: ");
             UUID userId = UUID.fromString(scanner.nextLine());
 
-            UserResponse user = get("/users/" + userId, UserResponse.class);
+            UserResponse user = apiClient.get("/users/" + userId, UserResponse.class);
 
-            loggedInUserId = user.id();
+            loggedInUserEmail = user.email;
 
             System.out.println("Login erfolgreich. Willkommen " + user.name() + "!");
-            showUserMenu();
+            userMenu.showUserMenu();
+
         } catch (Exception exception) {
             System.out.println("Login fehlgeschlagen: " + exception.getMessage());
         }
@@ -209,14 +167,15 @@ public class ConsoleClient {
 
             CreateRestaurantRequest request = new CreateRestaurantRequest(name, address, minOrderValue);
 
-            RestaurantResponse restaurant = post("/restaurants", request, RestaurantResponse.class);
+            RestaurantResponse restaurant = apiClient.post("/restaurants", request, RestaurantResponse.class);
 
             loggedInRestaurantId = restaurant.id();
 
             System.out.println("Restaurant wurde erstellt.");
             System.out.println("Deine Restaurant-ID: " + restaurant.id());
 
-            showRestaurantMenu();
+            restaurantMenu.showRestaurantMenu();
+
         } catch (Exception exception) {
             System.out.println("Restaurant konnte nicht erstellt werden: " + exception.getMessage());
         }
@@ -227,356 +186,17 @@ public class ConsoleClient {
             System.out.print("Restaurant-ID: ");
             UUID restaurantId = UUID.fromString(scanner.nextLine());
 
-            RestaurantResponse restaurant = get("/restaurants/" + restaurantId, RestaurantResponse.class);
+            RestaurantResponse restaurant = apiClient.get("/restaurants/" + restaurantId, RestaurantResponse.class);
 
             loggedInRestaurantId = restaurant.id();
 
             System.out.println("Login erfolgreich. Willkommen " + restaurant.name() + "!");
-            showRestaurantMenu();
+
+
+            restaurantMenu.showRestaurantMenu();
+
         } catch (Exception exception) {
             System.out.println("Login fehlgeschlagen: " + exception.getMessage());
-        }
-    }
-
-    private void showAllRestaurants() {
-        try {
-            List<RestaurantResponse> restaurants = getList("/restaurants", new TypeReference<>() {
-            });
-
-            if (restaurants.isEmpty()) {
-                System.out.println("Es gibt noch keine Restaurants.");
-                return;
-            }
-
-            for (RestaurantResponse restaurant : restaurants) {
-                System.out.println();
-                System.out.println("ID: " + restaurant.id());
-                System.out.println("Name: " + restaurant.name());
-                System.out.println("Adresse: " + restaurant.address());
-                System.out.println("Mindestbestellwert: " + restaurant.minOrderValue());
-            }
-        } catch (Exception exception) {
-            System.out.println("Restaurants konnten nicht geladen werden: " + exception.getMessage());
-        }
-    }
-
-    private void showDishesForRestaurant() {
-        try {
-            System.out.print("Restaurant-ID: ");
-            UUID restaurantId = UUID.fromString(scanner.nextLine());
-
-            showDishesForRestaurant(restaurantId);
-        } catch (Exception exception) {
-            System.out.println("Gerichte konnten nicht geladen werden: " + exception.getMessage());
-        }
-    }
-
-    private void showOwnDishes() {
-        if (loggedInRestaurantId == null) {
-            System.out.println("Du bist nicht als Restaurant eingeloggt.");
-            return;
-        }
-
-        showDishesForRestaurant(loggedInRestaurantId);
-    }
-
-    private void showDishesForRestaurant(UUID restaurantId) {
-        try {
-            List<DishResponse> dishes = getList("/restaurants/" + restaurantId + "/dishes", new TypeReference<>() {
-            });
-
-            if (dishes.isEmpty()) {
-                System.out.println("Dieses Restaurant hat noch keine Gerichte.");
-                return;
-            }
-
-            for (DishResponse dish : dishes) {
-                System.out.println();
-                System.out.println("ID: " + dish.id());
-                System.out.println("Name: " + dish.name());
-                System.out.println("Beschreibung: " + dish.description());
-                System.out.println("Preis: " + dish.price());
-                System.out.println("Zutaten: " + dish.ingredients());
-            }
-        } catch (Exception exception) {
-            System.out.println("Gerichte konnten nicht geladen werden: " + exception.getMessage());
-        }
-    }
-
-    private void createGroupOrder() {
-        try {
-            if (loggedInUserId == null) {
-                System.out.println("Du musst als User eingeloggt sein.");
-                return;
-            }
-
-            System.out.println("Wähle ein Restaurant aus:");
-            showAllRestaurants();
-
-            System.out.print("Restaurant-ID: ");
-            UUID restaurantId = UUID.fromString(scanner.nextLine());
-
-            System.out.print("Ablaufzeit in Minuten: ");
-            int expiresAt = Integer.parseInt(scanner.nextLine());
-
-            CreateGroupOrderRequest request = new CreateGroupOrderRequest(
-                    restaurantId,
-                    loggedInUserId,
-                    expiresAt
-            );
-
-            GroupOrderResponse groupOrder = post("/group-orders", request, GroupOrderResponse.class);
-
-            System.out.println("GroupOrder wurde erstellt.");
-            System.out.println("GroupOrder-ID: " + groupOrder.id());
-        } catch (Exception exception) {
-            System.out.println("GroupOrder konnte nicht erstellt werden: " + exception.getMessage());
-        }
-    }
-
-    private void showAllGroupOrders() {
-        try {
-            List<GroupOrderResponse> groupOrders = getList("/group-orders", new TypeReference<>() {
-            });
-
-            if (groupOrders.isEmpty()) {
-                System.out.println("Es gibt aktuell keine GroupOrders.");
-                return;
-            }
-
-            for (GroupOrderResponse groupOrder : groupOrders) {
-                System.out.println();
-                System.out.println("ID: " + groupOrder.id());
-                System.out.println("Restaurant-ID: " + groupOrder.restaurantId());
-                System.out.println("Creator-User-ID: " + groupOrder.creatorUserId());
-                System.out.println("ExpiresAt: " + groupOrder.expiresAt());
-            }
-        } catch (Exception exception) {
-            System.out.println("GroupOrders konnten nicht geladen werden: " + exception.getMessage());
-        }
-    }
-
-    private void joinGroupOrder() {
-        try {
-            if (loggedInUserId == null) {
-                System.out.println("Du musst als User eingeloggt sein.");
-                return;
-            }
-
-            System.out.print("GroupOrder-ID: ");
-            UUID groupOrderId = UUID.fromString(scanner.nextLine());
-
-            GroupOrderResponse groupOrder = get("/group-orders/" + groupOrderId, GroupOrderResponse.class);
-
-            System.out.println("Gerichte des Restaurants:");
-            showDishesForRestaurant(groupOrder.restaurantId());
-
-            System.out.print("Dish-ID: ");
-            UUID dishId = UUID.fromString(scanner.nextLine());
-
-            System.out.print("Menge: ");
-            int quantity = Integer.parseInt(scanner.nextLine());
-
-            CreateOrderEntryRequest request = new CreateOrderEntryRequest(
-                    loggedInUserId,
-                    dishId,
-                    quantity
-            );
-
-            OrderEntryResponse orderEntry = post(
-                    "/group-orders/" + groupOrderId + "/order-entries",
-                    request,
-                    OrderEntryResponse.class
-            );
-
-            System.out.println("Du bist der GroupOrder beigetreten.");
-            System.out.println("OrderEntry-ID: " + orderEntry.id());
-        } catch (Exception exception) {
-            System.out.println("Beitritt zur GroupOrder fehlgeschlagen: " + exception.getMessage());
-        }
-    }
-
-    private void updateOrderEntry() {
-        try {
-            System.out.print("GroupOrder-ID: ");
-            UUID groupOrderId = UUID.fromString(scanner.nextLine());
-
-            System.out.print("OrderEntry-ID: ");
-            UUID orderEntryId = UUID.fromString(scanner.nextLine());
-
-            System.out.print("Neue Menge: ");
-            int quantity = Integer.parseInt(scanner.nextLine());
-
-            UpdateOrderEntryRequest request = new UpdateOrderEntryRequest(quantity);
-
-            put("/group-orders/" + groupOrderId + "/order-entries/" + orderEntryId, request);
-
-            System.out.println("OrderEntry wurde aktualisiert.");
-        } catch (Exception exception) {
-            System.out.println("OrderEntry konnte nicht aktualisiert werden: " + exception.getMessage());
-        }
-    }
-
-    private void createDish() {
-        try {
-            if (loggedInRestaurantId == null) {
-                System.out.println("Du musst als Restaurant eingeloggt sein.");
-                return;
-            }
-
-            System.out.print("Name: ");
-            String name = scanner.nextLine();
-
-            System.out.print("Beschreibung: ");
-            String description = scanner.nextLine();
-
-            System.out.print("Preis in Cent: ");
-            long price = Long.parseLong(scanner.nextLine());
-
-            System.out.print("Zutaten kommagetrennt: ");
-            List<String> ingredients = List.of(scanner.nextLine().split(","));
-
-            CreateDishRequest request = new CreateDishRequest(
-                    name,
-                    description,
-                    price,
-                    ingredients
-            );
-
-            DishResponse dish = post(
-                    "/restaurants/" + loggedInRestaurantId + "/dishes",
-                    request,
-                    DishResponse.class
-            );
-
-            System.out.println("Gericht wurde erstellt.");
-            System.out.println("Dish-ID: " + dish.id());
-        } catch (Exception exception) {
-            System.out.println("Gericht konnte nicht erstellt werden: " + exception.getMessage());
-        }
-    }
-
-    private void updateDish() {
-        try {
-            if (loggedInRestaurantId == null) {
-                System.out.println("Du musst als Restaurant eingeloggt sein.");
-                return;
-            }
-
-            System.out.print("Dish-ID: ");
-            UUID dishId = UUID.fromString(scanner.nextLine());
-
-            System.out.print("Name: ");
-            String name = scanner.nextLine();
-
-            System.out.print("Beschreibung: ");
-            String description = scanner.nextLine();
-
-            System.out.print("Preis in Cent: ");
-            long price = Long.parseLong(scanner.nextLine());
-
-            System.out.print("Zutaten kommagetrennt: ");
-            List<String> ingredients = List.of(scanner.nextLine().split(","));
-
-            UpdateDishRequest request = new UpdateDishRequest(
-                    loggedInRestaurantId,
-                    name,
-                    description,
-                    price,
-                    ingredients
-            );
-
-            put("/dishes/" + dishId, request);
-
-            System.out.println("Gericht wurde aktualisiert.");
-        } catch (Exception exception) {
-            System.out.println("Gericht konnte nicht aktualisiert werden: " + exception.getMessage());
-        }
-    }
-
-    private void deleteDish() {
-        try {
-            System.out.print("Dish-ID: ");
-            UUID dishId = UUID.fromString(scanner.nextLine());
-
-            delete("/dishes/" + dishId);
-
-            System.out.println("Gericht wurde gelöscht.");
-        } catch (Exception exception) {
-            System.out.println("Gericht konnte nicht gelöscht werden: " + exception.getMessage());
-        }
-    }
-
-    private <T> T get(String path, Class<T> responseType) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + path))
-                .GET()
-                .build();
-
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        validateResponse(response);
-
-        return objectMapper.readValue(response.body(), responseType);
-    }
-
-    private <T> List<T> getList(String path, TypeReference<List<T>> responseType) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + path))
-                .GET()
-                .build();
-
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        validateResponse(response);
-
-        return objectMapper.readValue(response.body(), responseType);
-    }
-
-    private <T> T post(String path, Object body, Class<T> responseType) throws IOException, InterruptedException {
-        String json = objectMapper.writeValueAsString(body);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + path))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
-
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        validateResponse(response);
-
-        return objectMapper.readValue(response.body(), responseType);
-    }
-
-    private void put(String path, Object body) throws IOException, InterruptedException {
-        String json = objectMapper.writeValueAsString(body);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + path))
-                .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.ofString(json))
-                .build();
-
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        validateResponse(response);
-    }
-
-    private void delete(String path) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + path))
-                .DELETE()
-                .build();
-
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        validateResponse(response);
-    }
-
-    private void validateResponse(HttpResponse<String> response) {
-        if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw new RuntimeException("HTTP " + response.statusCode() + ": " + response.body());
         }
     }
 
@@ -613,13 +233,13 @@ public class ConsoleClient {
 
     public record CreateGroupOrderRequest(
             UUID restaurantId,
-            UUID creatorUserId,
+            String creatorUserEmail,
             int expiresAt
     ) {
     }
 
     public record CreateOrderEntryRequest(
-            UUID userId,
+            String userEmail,
             UUID dishId,
             int quantity
     ) {
@@ -631,7 +251,6 @@ public class ConsoleClient {
     }
 
     public record UserResponse(
-            UUID id,
             String name,
             String email,
             Object address
@@ -659,14 +278,14 @@ public class ConsoleClient {
     public record GroupOrderResponse(
             UUID id,
             UUID restaurantId,
-            UUID creatorUserId,
+            String creatorUserEmail,
             int expiresAt
     ) {
     }
 
     public record OrderEntryResponse(
             UUID id,
-            UUID userId,
+            String userEmail,
             UUID dishId,
             int quantity
     ) {
