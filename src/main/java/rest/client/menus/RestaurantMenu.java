@@ -14,15 +14,15 @@ public class RestaurantMenu {
     private final ApiClient apiClient;
     private UUID loggedInRestaurantId;
 
-    public RestaurantMenu(Scanner scanner,ApiClient apiClient,UUID loggedInRestaurantId) {
+    public RestaurantMenu(Scanner scanner,ApiClient apiClient) {
         this.scanner = scanner;
         this.apiClient = apiClient;
-        this.loggedInRestaurantId = loggedInRestaurantId;
     }
 
 
-    public void showRestaurantMenu() {
+    public void showRestaurantMenu(UUID passedLoggedInRestaurantId) {
         boolean logout = false;
+        this.loggedInRestaurantId=passedLoggedInRestaurantId;
 
         while (!logout) {
             System.out.println();
@@ -42,7 +42,7 @@ public class RestaurantMenu {
                 case "3" -> updateDish();
                 case "4" -> deleteDish();
                 case "0" -> {
-                    loggedInRestaurantId = null;
+                    this.loggedInRestaurantId = null;
                     logout = true;
                 }
                 default -> System.out.println("Ungültige Eingabe.");
@@ -51,12 +51,12 @@ public class RestaurantMenu {
     }
 
     private void showOwnDishes() {
-        if (loggedInRestaurantId == null) {
+        if (this.loggedInRestaurantId == null) {
             System.out.println("Du bist nicht als Restaurant eingeloggt.");
             return;
         }
 
-        showDishesForRestaurant(loggedInRestaurantId);
+        showDishesForRestaurant(this.loggedInRestaurantId);
 
     }
 

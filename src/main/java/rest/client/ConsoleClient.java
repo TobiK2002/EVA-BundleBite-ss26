@@ -34,8 +34,8 @@ public class ConsoleClient {
 
     ConsoleClient() {
         this.apiClient= new ApiClient();
-        this.userMenu= new UserMenu(scanner,apiClient,loggedInUserEmail);
-        this.restaurantMenu= new RestaurantMenu(scanner,apiClient,loggedInRestaurantId);
+        this.userMenu= new UserMenu(scanner,apiClient);
+        this.restaurantMenu= new RestaurantMenu(scanner,apiClient);
 
     }
 
@@ -130,7 +130,7 @@ public class ConsoleClient {
             System.out.println("User wurde erstellt.");
             System.out.println("Deine User-E-Mail: " + user.email());
 
-            userMenu.showUserMenu();
+            userMenu.showUserMenu(loggedInUserEmail);
 
         } catch (Exception exception) {
             System.out.println("User konnte nicht erstellt werden: " + exception.getMessage());
@@ -147,7 +147,7 @@ public class ConsoleClient {
             loggedInUserEmail = user.email;
 
             System.out.println("Login erfolgreich. Willkommen " + user.name() + "!");
-            userMenu.showUserMenu();
+            userMenu.showUserMenu(loggedInUserEmail);
 
         } catch (Exception exception) {
             System.out.println("Login fehlgeschlagen: " + exception.getMessage());
@@ -174,7 +174,7 @@ public class ConsoleClient {
             System.out.println("Restaurant wurde erstellt.");
             System.out.println("Deine Restaurant-ID: " + restaurant.id());
 
-            restaurantMenu.showRestaurantMenu();
+            restaurantMenu.showRestaurantMenu(loggedInRestaurantId);
 
         } catch (Exception exception) {
             System.out.println("Restaurant konnte nicht erstellt werden: " + exception.getMessage());
@@ -193,7 +193,7 @@ public class ConsoleClient {
             System.out.println("Login erfolgreich. Willkommen " + restaurant.name() + "!");
 
 
-            restaurantMenu.showRestaurantMenu();
+            restaurantMenu.showRestaurantMenu(loggedInRestaurantId);
 
         } catch (Exception exception) {
             System.out.println("Login fehlgeschlagen: " + exception.getMessage());

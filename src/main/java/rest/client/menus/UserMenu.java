@@ -11,17 +11,18 @@ import java.util.UUID;
 public class UserMenu {
 
     private final Scanner scanner;
-    private String loggedInUserEmail;
     private final ApiClient apiClient;
+    private String loggedInUserEmail;
 
-    public UserMenu(Scanner scanner,ApiClient apiClient,String loggedInUserEmail) {
+
+    public UserMenu(Scanner scanner,ApiClient apiClient) {
         this.scanner = scanner;
         this.apiClient = apiClient;
-        this.loggedInUserEmail = loggedInUserEmail;
     }
 
-    public void showUserMenu() {
+    public void showUserMenu(String loggedInUserEmail) {
         boolean logout = false;
+        this.loggedInUserEmail=loggedInUserEmail;
 
         while (!logout) {
             System.out.println();
@@ -45,7 +46,7 @@ public class UserMenu {
                 case "5" -> joinGroupOrder();
                 case "6" -> updateOrderEntry();
                 case "0" -> {
-                    loggedInUserEmail = null;
+                    this.loggedInUserEmail = null;
                     logout = true;
                 }
                 default -> System.out.println("Ungültige Eingabe.");
@@ -129,7 +130,7 @@ public class UserMenu {
 
             ConsoleClient.CreateGroupOrderRequest request = new ConsoleClient.CreateGroupOrderRequest(
                     restaurantId,
-                    loggedInUserEmail,
+                    this.loggedInUserEmail,
                     expiresAt
             );
 
@@ -186,7 +187,7 @@ public class UserMenu {
             int quantity = Integer.parseInt(scanner.nextLine());
 
             ConsoleClient.CreateOrderEntryRequest request = new ConsoleClient.CreateOrderEntryRequest(
-                    loggedInUserEmail,
+                    this.loggedInUserEmail,
                     dishId,
                     quantity
             );
