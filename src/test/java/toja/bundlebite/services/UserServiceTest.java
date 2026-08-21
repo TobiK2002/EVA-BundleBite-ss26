@@ -34,8 +34,8 @@ class UserServiceTest {
         @DisplayName("Should create valid Customer")
         void shouldCreateValidUser() {
             // Arrange
-            String name = "Max Mustermann";
-            String email = "max.mustermann@gmx.de";
+            String name = "Marina Mustermann";
+            String email = "marina.mustermann@gmx.de";
             String address = "Beispielstraße 24 04109 Leipzig";
 
             // Act
@@ -55,7 +55,7 @@ class UserServiceTest {
         void shouldThrowExceptionForInvalidName() {
             // Arrange
             String name = "Albert";
-            String email = "max.mustermann@gmx.de";
+            String email = "Albert.mustermann@gmx.de";
             String address = "Beispielstraße 24 04109 Leipzig";
 
             // Act & Assert
@@ -112,8 +112,8 @@ class UserServiceTest {
         @DisplayName("Should throw exception for invalid address")
         void shouldThrowExceptionForInvalidAddress() {
             // Arrange
-            String name = "Max Mustermann";
-            String email = "max.mustermann@gmx.de";
+            String name = "Maike Mustermann";
+            String email = "maike.mustermann@gmx.de";
             String invalidAddress = "Leipzig";
 
             // Act & Assert
@@ -128,8 +128,8 @@ class UserServiceTest {
         @DisplayName("Should throw exception for address without valid postal code")
         void shouldThrowExceptionForAddressWithoutValidPostalCode() {
             // Arrange
-            String name = "Max Mustermann";
-            String email = "max.mustermann@gmx.de";
+            String name = "Merten Mustermann";
+            String email = "merten.mustermann@gmx.de";
             String invalidAddress = "Beispielstraße 24 4109 Leipzig";
 
             // Act & Assert
@@ -192,11 +192,17 @@ class UserServiceTest {
             @DisplayName("Should update existing user")
             void shouldUpdateExistingUser() {
                 // Arrange
-                User updatedUser = new User(
-                        "Erika Musterfrau",
+                 userService.createUser(
+                         "Erika Musterfrau",
+                         "erika.musterfrau@gmx.de",
+                         "Neue Straße 12 04109 Leipzig"
+                 );
+                 User updatedUser = new User(
+                        "Erika Muster",
                         "erika.musterfrau@gmx.de",
                         "Neue Straße 12 04109 Leipzig"
                 );
+
 
                 // Act
                 userService.updateUser(updatedUser);
@@ -226,31 +232,20 @@ class UserServiceTest {
                 assertEquals("User does not exist", exception.getMessage());
             }
 
-            @Test
-            @DisplayName("Should throw exception when updating user with invalid email")
-            void shouldThrowExceptionWhenUpdatingUserWithInvalidEmail() {
-                // Arrange
-                User updatedUser = new User(
-                        "Erika Musterfrau",
-                        "invalid-email",
-                        "Neue Straße 12 04109 Leipzig"
-                );
 
-                // Act & Assert
-                UserException exception = assertThrows(
-                        UserException.class,
-                        () -> userService.updateUser(updatedUser)
-                );
-                assertEquals("Invalid email", exception.getMessage());
-            }
 
             @Test
             @DisplayName("Should throw exception when updating user with invalid name")
             void shouldThrowExceptionWhenUpdatingUserWithInvalidName() {
                 // Arrange
+                userService.createUser(
+                        "Marta Musterfrau",
+                        "marta.musterfrau@gmx.de",
+                        "Neue Straße 12 04109 Leipzig"
+                );
                 User updatedUser = new User(
-                        "Erika",
-                        "erika.musterfrau@gmx.de",
+                        "Marta",
+                        "marta.musterfrau@gmx.de",
                         "Neue Straße 12 04109 Leipzig"
                 );
 

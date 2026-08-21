@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public class User {
 
-    private String email;
+    private final String email;
     private String name;
     private Address address;
 

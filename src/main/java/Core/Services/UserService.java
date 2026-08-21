@@ -77,7 +77,7 @@ public class UserService {
         }
 
         if (
-                user.getName() == null || user.getName().trim().split(" ").length < 2
+                user.getName() == null || user.getName().trim().split("\\s+").length < 2
         ) {
             throw UserException.invalidName();
         }

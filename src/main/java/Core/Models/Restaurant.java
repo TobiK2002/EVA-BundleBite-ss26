@@ -14,7 +14,7 @@ public class Restaurant {
     private String name;
     private Address address;
     private Double minOrderValue;
-    private List<UUID> dishes = new ArrayList<>();
+    private final List<UUID> dishes = new ArrayList<>();
 
 
     public Restaurant(UUID id, String name, Address address, Double minOrderValue) {

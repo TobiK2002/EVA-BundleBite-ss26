@@ -138,29 +138,35 @@ public class RestaurantService {
             long price,
             ArrayList<String> ingredients
     ) throws RestaurantException {
-        if (restaurantsById.containsKey(restaurantId)) {
-            Dish newDish = dishService.createDish(
-                    restaurantId,
-                    name,
-                    description,
-                    price,
-                    ingredients
-            );
 
-            Restaurant referenzedRestaurant = this.getRestaurantById(restaurantId);
-            referenzedRestaurant.addDish(newDish.getId());
-            updateRestaurant(referenzedRestaurant);
+        Restaurant restaurant = restaurantsById.get(restaurantId);
 
-            return newDish;
-        } else {
+        if (restaurant == null) {
             throw RestaurantException.restaurantDoesNotExist();
         }
+
+        Dish newDish = dishService.createDish(
+                restaurantId,
+                name,
+                description,
+                price,
+                ingredients
+        );
+
+        restaurant.addDish(newDish.getId());
+
+        restaurantsById.put(
+                restaurantId,
+                clone(restaurant)
+        );
+
+        return newDish;
     }
 
     public void updateDish(Dish updatedDish) throws DishException {
         Restaurant restaurant = restaurantsById.get(updatedDish.getRestaurantId());
 
-        if (!restaurant.getAllDishIds().contains(updatedDish.getId())) {
+        if (restaurant == null || !restaurant.getAllDishIds().contains(updatedDish.getId())) {
             throw DishException.dishDoesNotExist();
         }
 
