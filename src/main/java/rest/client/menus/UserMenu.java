@@ -143,6 +143,53 @@ public class UserMenu {
         }
     }
 
+    private void createOrderEntryForGroupOrder() {
+        try {
+            if (loggedInUserEmail == null) {
+                System.out.println("Du musst als User eingeloggt sein.");
+                return;
+            }
+            System.out.println("Wähle eine GroupOrder aus, zu der du etwas hinzufügen willst:");
+
+            showAllGroupOrders();
+
+            System.out.print("GroupOrder-ID: ");
+            UUID groupOrderId = UUID.fromString(scanner.nextLine());
+
+            System.out.print("Dish-ID: ");
+            UUID dishId = UUID.fromString(scanner.nextLine());
+
+            System.out.print("Menge: ");
+            int quantity = Integer.parseInt(scanner.nextLine());
+
+            ConsoleClient.CreateGroupOrderEntryRequest request = new ConsoleClient.CreateGroupOrderEntryRequest(
+                    this.loggedInUserEmail,
+                    dishId,
+                    quantity
+            );
+
+            ConsoleClient.OrderEntryResponse orderEntry = apiClient.post(
+                    "/group-orders/" + groupOrderId + "/order-entries", request, ConsoleClient.OrderEntryResponse.class);
+
+            System.out.println("OrderEntry " + orderEntry.id() + " wurde zur GroupOrder hinzugefügt.");
+
+            System.out.println("Die GroupOrder enthält jetzt folgende OrderEntries:");
+
+            List<ConsoleClient.OrderEntryResponse> orderEntries = apiClient.getList("/group-orders/" + groupOrderId + "/order-entries", new TypeReference<>() {
+            });
+
+            for (ConsoleClient.OrderEntryResponse entry : orderEntries) {
+                System.out.println("OrderEntry-ID: " + entry.id());
+                System.out.println("Dish-ID: " + entry.dishId());
+                System.out.println("Menge: " + entry.quantity());
+            }
+
+
+        } catch (Exception exception) {
+            System.out.println("OrderEntry für die GroupOrder konnte nicht erstellt werden: " + exception.getMessage());
+        }
+    }
+
     private void showAllGroupOrders() {
         try {
             List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders", new TypeReference<>() {

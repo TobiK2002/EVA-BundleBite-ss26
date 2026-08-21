@@ -48,7 +48,7 @@ public class BundleBiteController {
     }
 
     @GetMapping("/users/{userEmail}")
-    public User getUserById(@PathVariable String userEmail) {
+    public User getUserByEmail(@PathVariable String userEmail) {
         return userService.getUserByEmail(userEmail);
     }
 

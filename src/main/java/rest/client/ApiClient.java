@@ -21,6 +21,8 @@ public class ApiClient {
     private final ObjectMapper objectMapper =
             new ObjectMapper();
 
+
+
     public  <T> T get(String path, Class<T> responseType) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + path))

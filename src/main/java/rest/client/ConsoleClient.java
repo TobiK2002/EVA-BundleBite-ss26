@@ -18,12 +18,7 @@ import java.util.UUID;
 
 public class ConsoleClient {
 
-
-    private static final String BASE_URL = "http://localhost:8080/api";
-
     private final Scanner scanner = new Scanner(System.in);
-    private final HttpClient httpClient = HttpClient.newHttpClient();
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final UserMenu userMenu;
     private final RestaurantMenu restaurantMenu;
     private final ApiClient apiClient;
@@ -139,10 +134,10 @@ public class ConsoleClient {
 
     private void loginUser() {
         try {
-            System.out.print("User-ID: ");
-            UUID userId = UUID.fromString(scanner.nextLine());
+            System.out.print("User-E-Mail: ");
+            String userEmail = scanner.nextLine();
 
-            UserResponse user = apiClient.get("/users/" + userId, UserResponse.class);
+            UserResponse user = apiClient.get("/users/" + userEmail, UserResponse.class);
 
             loggedInUserEmail = user.email;
 
@@ -235,6 +230,12 @@ public class ConsoleClient {
             UUID restaurantId,
             String creatorUserEmail,
             int expiresAt
+    ) {
+    }
+    public record CreateGroupOrderEntryRequest(
+            String userEmail,
+            UUID dishId,
+            int quantity
     ) {
     }
 
