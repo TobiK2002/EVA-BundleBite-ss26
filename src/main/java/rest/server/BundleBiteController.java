@@ -95,6 +95,9 @@ public class BundleBiteController {
         return restaurantService.getAllRestaurants();
     }
 
+    @GetMapping("/restaurant/{city}")
+    public List<Restaurant> getRestaurantsByCity(@PathVariable String city) { return restaurantService.getAllRestaurantsWithSameCity(city);}
+
     @GetMapping("/restaurants/{restaurantId}")
     public Restaurant getRestaurantById(@PathVariable UUID restaurantId) {
         return restaurantService.getRestaurantById(restaurantId);
@@ -188,6 +191,9 @@ public class BundleBiteController {
         return groupOrderService.getAllGroupOrders();
     }
 
+    @GetMapping("/group-orders/{postalCode}")
+    public List<GroupOrder> getGroupOrdersByPostal(@PathVariable String postalCode) {return groupOrderService.getAllGroupOrdersWithSamePostalCode(postalCode);}
+
     @GetMapping("/group-orders/{groupOrderId}")
     public GroupOrder getGroupOrderById(@PathVariable UUID groupOrderId) {
         return groupOrderService.getGroupOrderById(groupOrderId);
@@ -218,6 +224,11 @@ public class BundleBiteController {
     @GetMapping("/group-orders/{groupOrderId}/order-entries")
     public List<OrderEntry> getAllOrderEntriesForGroupOrder(@PathVariable UUID groupOrderId) {
         return groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId);
+    }
+
+    @GetMapping("/group-orders/{groupOrderId}/order-entries/{userEmail}")
+    public List<OrderEntry> getOrderEntriesByUserByGroupOrder(@PathVariable UUID groupOrderId, @PathVariable String userEmail) {
+        return groupOrderService.getAllOrderEntriesByGroupOrderByUser(userEmail, groupOrderId);
     }
 
     @GetMapping("/order-entries/{orderEntryId}")
