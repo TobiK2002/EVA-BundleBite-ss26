@@ -31,9 +31,8 @@ public class UserMenu {
             System.out.println("2. Gerichte eines Restaurants anzeigen");
             System.out.println("3. GroupOrder erstellen");
             System.out.println("4. Alle GroupOrders anzeigen");
-            System.out.println("5. OrderEntry für GroupOrder erstellen");
-            System.out.println("6. GroupOrder beitreten");
-            System.out.println("7. OrderEntry bearbeiten");
+            System.out.println("5. GroupOrder beitreten");
+            System.out.println("6. OrderEntry bearbeiten");
             System.out.println("0. Logout");
             System.out.print("Auswahl: ");
 
@@ -44,9 +43,8 @@ public class UserMenu {
                 case "2" -> showDishesForRestaurant();
                 case "3" -> createGroupOrder();
                 case "4" -> showAllGroupOrders();
-                case "5" -> createOrderEntryForGroupOrder();
-                case "6" -> joinGroupOrder();
-                case "7" -> updateOrderEntry();
+                case "5" -> joinGroupOrder();
+                case "6" -> updateOrderEntry();
                 case "0" -> {
                     this.loggedInUserEmail = null;
                     logout = true;
@@ -114,11 +112,11 @@ public class UserMenu {
     }
 
 
-    private void createGroupOrder() {
+    private ConsoleClient.GroupOrderResponse createGroupOrder() {
         try {
             if (loggedInUserEmail == null) {
                 System.out.println("Du musst als User eingeloggt sein.");
-                return;
+                return null;
             }
 
             System.out.println("Wähle ein Restaurant aus:");
@@ -140,57 +138,13 @@ public class UserMenu {
 
             System.out.println("GroupOrder wurde erstellt.");
             System.out.println("GroupOrder-ID: " + groupOrder.id());
+            return groupOrder;
         } catch (Exception exception) {
             System.out.println("GroupOrder konnte nicht erstellt werden: " + exception.getMessage());
+            return null;
         }
     }
 
-    private void createOrderEntryForGroupOrder() {
-        try {
-            if (loggedInUserEmail == null) {
-                System.out.println("Du musst als User eingeloggt sein.");
-                return;
-            }
-            System.out.println("Wähle eine GroupOrder aus, zu der du etwas hinzufügen willst:");
-
-            showAllGroupOrders();
-
-            System.out.print("GroupOrder-ID: ");
-            UUID groupOrderId = UUID.fromString(scanner.nextLine());
-
-            System.out.print("Dish-ID: ");
-            UUID dishId = UUID.fromString(scanner.nextLine());
-
-            System.out.print("Menge: ");
-            int quantity = Integer.parseInt(scanner.nextLine());
-
-            ConsoleClient.CreateGroupOrderEntryRequest request = new ConsoleClient.CreateGroupOrderEntryRequest(
-                    this.loggedInUserEmail,
-                    dishId,
-                    quantity
-            );
-
-            ConsoleClient.OrderEntryResponse orderEntry = apiClient.post(
-                    "/group-orders/" + groupOrderId + "/order-entries", request, ConsoleClient.OrderEntryResponse.class);
-
-            System.out.println("OrderEntry " + orderEntry.id() + " wurde zur GroupOrder hinzugefügt.");
-
-            System.out.println("Die GroupOrder enthält jetzt folgende OrderEntries:");
-
-            List<ConsoleClient.OrderEntryResponse> orderEntries = apiClient.getList("/group-orders/" + groupOrderId + "/order-entries", new TypeReference<>() {
-            });
-
-            for (ConsoleClient.OrderEntryResponse entry : orderEntries) {
-                System.out.println("OrderEntry-ID: " + entry.id());
-                System.out.println("Dish-ID: " + entry.dishId());
-                System.out.println("Menge: " + entry.quantity());
-            }
-
-
-        } catch (Exception exception) {
-            System.out.println("OrderEntry für die GroupOrder konnte nicht erstellt werden: " + exception.getMessage());
-        }
-    }
 
     private void showAllGroupOrders() {
         try {
@@ -220,9 +174,38 @@ public class UserMenu {
                 System.out.println("Du musst als User eingeloggt sein.");
                 return;
             }
+            UUID groupOrderId = null;
 
-            System.out.print("GroupOrder-ID: ");
-            UUID groupOrderId = UUID.fromString(scanner.nextLine());
+            //Schauen ob GroupOrders existieren, wenn ja anzeigen, wenn nein eine erstellen
+            List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders", new TypeReference<>() {
+            });
+
+                if (groupOrders.isEmpty()) {
+                    while (groupOrderId == null) {
+                        System.out.println("Es gibt aktuell keine GroupOrders.\n Möchtest du eine erstellen? (y/n)");
+                        String input = scanner.nextLine();
+                        if (input.equalsIgnoreCase("y")) {
+
+                            ConsoleClient.GroupOrderResponse newGroupOrder = createGroupOrder();
+                            if (newGroupOrder == null) {
+                                return;
+                            }
+                            groupOrderId = newGroupOrder.id();
+                        }
+                        else if (input.equalsIgnoreCase("n")) {
+                            return;
+                        }
+                        else {
+                            System.out.println("Ungültige Eingabe.");
+                        }
+                    }
+                }
+            //Wenn GroupOrders existieren
+            if (groupOrderId == null) {
+                System.out.print("GroupOrder-ID: ");
+                groupOrderId = UUID.fromString(scanner.nextLine());
+            }
+
 
             ConsoleClient.GroupOrderResponse groupOrder = apiClient.get("/group-orders/" + groupOrderId, ConsoleClient.GroupOrderResponse.class);
 
