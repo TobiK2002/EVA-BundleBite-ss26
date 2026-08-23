@@ -164,9 +164,20 @@ public class UserMenu {
             }
 
             for (ConsoleClient.GroupOrderResponse groupOrder : groupOrders) {
+
+                ConsoleClient.RestaurantResponse restaurant=new ConsoleClient.RestaurantResponse(null,null,null,null);
+                try {
+                    restaurant = apiClient.get("/restaurants/"+ groupOrder.restaurantId(),ConsoleClient.RestaurantResponse.class);
+                } catch (Exception exception) {
+                    System.out.println("Fehler beim Laden des Restaurants" + exception.getMessage());
+                }
+
                 System.out.println();
                 System.out.println("ID: " + groupOrder.id());
                 System.out.println("Restaurant-ID: " + groupOrder.restaurantId());
+                System.out.println("Restaurant-Name:" + restaurant.name());
+                System.out.println("Restaurant-Adresse: " + restaurant.address());
+                System.out.println("Restaurant-Mindestbestellwert: " + restaurant.minOrderValue());
                 System.out.println("Creator-User-ID: " + groupOrder.creatorUserEmail());
                 System.out.println("ExpiresAt: " + groupOrder.expiresAt());
             }
@@ -203,10 +214,22 @@ public class UserMenu {
 
     private void  showAllGroupOrdersWithIndex(List<ConsoleClient.GroupOrderResponse> groupOrders) {
         for (ConsoleClient.GroupOrderResponse groupOrder : groupOrders) {
+
+            //Default Restaurant Response, wenn API Call nicht klappt
+            ConsoleClient.RestaurantResponse restaurant=new ConsoleClient.RestaurantResponse(null,null,null,null);
+            try {
+                restaurant = apiClient.get("/restaurants/"+ groupOrder.restaurantId(),ConsoleClient.RestaurantResponse.class);
+            } catch (Exception exception) {
+                System.out.println("Fehler beim Laden des Restaurants" + exception.getMessage());
+            }
+
             System.out.println();
-            System.out.println("Zahl für Menüauswahl: " + groupOrders.indexOf(groupOrder));
-            System.out.println("ID: " + groupOrder.id());
+            System.out.println("Zahl für die Konsoleneingabe zum Auswählen: " + groupOrders.indexOf(groupOrder));
+            System.out.println("GroupOrder-ID: " + groupOrder.id());
             System.out.println("Restaurant-ID: " + groupOrder.restaurantId());
+            System.out.println("Restaurant-Name:" + restaurant.name());
+            System.out.println("Restaurant-Adresse: " + restaurant.address());
+            System.out.println("Restaurant-Mindestbestellwert: " + restaurant.minOrderValue());
             System.out.println("Creator-User-ID: " + groupOrder.creatorUserEmail());
             System.out.println("ExpiresAt: " + groupOrder.expiresAt());
         }
