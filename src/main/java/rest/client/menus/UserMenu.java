@@ -64,7 +64,9 @@ public class UserMenu {
 
     private void showAllRestaurants() {
         try {
-            List<ConsoleClient.RestaurantResponse> restaurants = apiClient.getList("/restaurants", new TypeReference<>() {
+            ConsoleClient.UserResponse response = apiClient.get("/users/" + loggedInUserEmail, ConsoleClient.UserResponse.class);
+
+            List<ConsoleClient.RestaurantResponse> restaurants = apiClient.getList("/restaurants/city/" + response.address().city(), new TypeReference<>() {
             });
 
             if (restaurants.isEmpty()) {
@@ -234,6 +236,8 @@ public class UserMenu {
             System.out.println("ExpiresAt: " + groupOrder.expiresAt());
         }
     }
+
+
 
     private void joinGroupOrder() {
         try {

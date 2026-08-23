@@ -95,7 +95,7 @@ public class BundleBiteController {
         return restaurantService.getAllRestaurants();
     }
 
-    @GetMapping("/restaurant/city/{city}")
+    @GetMapping("/restaurants/city/{city}")
     public List<Restaurant> getRestaurantsByCity(@PathVariable String city) { return restaurantService.getAllRestaurantsWithSameCity(city);}
 
     @GetMapping("/restaurants/{restaurantId}")

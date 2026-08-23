@@ -254,14 +254,14 @@ public class ConsoleClient {
     public record UserResponse(
             String name,
             String email,
-            Object address
+            AddressResponse address
     ) {
     }
 
     public record RestaurantResponse(
             UUID id,
             String name,
-            Object address,
+            AddressResponse address,
             Double minOrderValue
     ) {
     }
@@ -290,6 +290,14 @@ public class ConsoleClient {
             UUID dishId,
             int quantity,
             double sumPrice
+    ) {
+    }
+
+    public record AddressResponse(
+            String street,
+            String houseNumber,
+            String postalCode,
+            String city
     ) {
     }
 }
