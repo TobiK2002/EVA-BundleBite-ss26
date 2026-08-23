@@ -249,7 +249,7 @@ public class UserMenu {
             UUID groupOrderId = null;
 
             //Schauen ob GroupOrders existieren, wenn ja anzeigen, wenn nein eine erstellen
-            List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders", new TypeReference<>() {
+            List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders/by-postal/" + loggedInUser.address().postalCode(), new TypeReference<>() {
             });
 
                 if (groupOrders.isEmpty()) {
