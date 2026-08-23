@@ -95,7 +95,7 @@ public class BundleBiteController {
         return restaurantService.getAllRestaurants();
     }
 
-    @GetMapping("/restaurant/{city}")
+    @GetMapping("/restaurant/city/{city}")
     public List<Restaurant> getRestaurantsByCity(@PathVariable String city) { return restaurantService.getAllRestaurantsWithSameCity(city);}
 
     @GetMapping("/restaurants/{restaurantId}")
@@ -191,7 +191,7 @@ public class BundleBiteController {
         return groupOrderService.getAllGroupOrders();
     }
 
-    @GetMapping("/group-orders/{postalCode}")
+    @GetMapping("/group-orders/by-postal/{postalCode}")
     public List<GroupOrder> getGroupOrdersByPostal(@PathVariable String postalCode) {return groupOrderService.getAllGroupOrdersWithSamePostalCode(postalCode);}
 
     @GetMapping("/group-orders/{groupOrderId}")
@@ -226,7 +226,7 @@ public class BundleBiteController {
         return groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId);
     }
 
-    @GetMapping("/group-orders/{groupOrderId}/order-entries/{userEmail}")
+    @GetMapping("/group-orders/with-email/{groupOrderId}/order-entries/{userEmail}")
     public List<OrderEntry> getOrderEntriesByUserByGroupOrder(@PathVariable UUID groupOrderId, @PathVariable String userEmail) {
         return groupOrderService.getAllOrderEntriesByGroupOrderByUser(userEmail, groupOrderId);
     }
