@@ -171,6 +171,17 @@ public class UserMenu {
         }
     }
 
+    private void  showAllGroupOrdersWithIndex(List<ConsoleClient.GroupOrderResponse> groupOrders) {
+        for (ConsoleClient.GroupOrderResponse groupOrder : groupOrders) {
+            System.out.println();
+            System.out.println("Zahl für Menüauswahl: " + groupOrders.indexOf(groupOrder));
+            System.out.println("ID: " + groupOrder.id());
+            System.out.println("Restaurant-ID: " + groupOrder.restaurantId());
+            System.out.println("Creator-User-ID: " + groupOrder.creatorUserEmail());
+            System.out.println("ExpiresAt: " + groupOrder.expiresAt());
+        }
+    }
+
     private void joinGroupOrder() {
         try {
             if (loggedInUserEmail == null) {
@@ -206,9 +217,9 @@ public class UserMenu {
 
             //Wenn GroupOrders existieren
             if (groupOrderId == null) {
-                showAllGroupOrders();
-                System.out.print("GroupOrder-ID: ");
-                groupOrderId = UUID.fromString(scanner.nextLine());
+                showAllGroupOrdersWithIndex (groupOrders);
+                System.out.print("GroupOrder-Zahl für Menüauswahl: ");
+                groupOrderId=groupOrders.get(Integer.parseInt(scanner.nextLine())).id();
             }
 
 
