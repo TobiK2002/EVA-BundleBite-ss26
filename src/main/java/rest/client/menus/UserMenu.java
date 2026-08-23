@@ -14,6 +14,9 @@ public class UserMenu {
     private final ApiClient apiClient;
     private String loggedInUserEmail;
 
+    private static final String SERVER_HOST = "localhost";
+    private static final int SOCKET_PORT = 8081;
+
 
     public UserMenu(Scanner scanner,ApiClient apiClient) {
         this.scanner = scanner;
@@ -200,8 +203,10 @@ public class UserMenu {
                         }
                     }
                 }
+
             //Wenn GroupOrders existieren
             if (groupOrderId == null) {
+                showAllGroupOrders();
                 System.out.print("GroupOrder-ID: ");
                 groupOrderId = UUID.fromString(scanner.nextLine());
             }
