@@ -181,7 +181,7 @@ public class UserMenu {
                 System.out.println("Du musst als User eingeloggt sein.");
                 return;
             }
-            List<ConsoleClient.GroupOrderResponse> groupOrders= apiClient.getList("/group-orders/"+ this.loggedInUserEmail, new TypeReference<>(){});
+            List<ConsoleClient.GroupOrderResponse> groupOrders= apiClient.getList("/group-orders/forUser/"+ this.loggedInUserEmail, new TypeReference<>(){});
 
             if (groupOrders.isEmpty()) {
                 System.out.println("Du bist aktuell in keiner GroupOrder.");
@@ -290,17 +290,25 @@ public class UserMenu {
                 System.out.println("Du musst als User eingeloggt sein.");
                 return;
             }
+            //Group-Orders anzeigen, in welche User sich befindet
             try {
-                List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders/" + this.loggedInUserEmail, new TypeReference<>() {
+                List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders/forUser/" + this.loggedInUserEmail, new TypeReference<>() {
                 });
 
+                if (groupOrders.isEmpty()) {
+                    System.out.println("Du bist aktuell in keiner GroupOrder, bitte erstell erst eine!");
+                    return;
+                }
+
+                System.out.println("Dies sind deine aktuellen GroupOrders, bitte wähle eine aus, um die Einträge zu sehen:\n ");
                 showAllGroupOrdersWithIndex(groupOrders);
+                System.out.println();
 
                 System.out.print("GroupOrder-Zahl für Menüauswahl: ");
                 groupOrderId=groupOrders.get(Integer.parseInt(scanner.nextLine())).id();
 
             } catch (Exception exception) {
-                System.out.println("Deine GroupOrders konnten nicht geladen werden" + exception.getMessage());
+                System.out.println("Deine GroupOrders konnten nicht geladen werden " + exception.getMessage());
                 return;
             }
             //Für die ausgewählte GroupOrder, in welche User sich befindet, werden seine Einträge gelistet
