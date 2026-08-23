@@ -64,9 +64,9 @@ public class UserMenu {
 
     private void showAllRestaurants() {
         try {
-            ConsoleClient.UserResponse response = apiClient.get("/users/" + loggedInUserEmail, ConsoleClient.UserResponse.class);
+            ConsoleClient.UserResponse user = apiClient.get("/users/" + loggedInUserEmail, ConsoleClient.UserResponse.class);
 
-            List<ConsoleClient.RestaurantResponse> restaurants = apiClient.getList("/restaurants/city/" + response.address().city(), new TypeReference<>() {
+            List<ConsoleClient.RestaurantResponse> restaurants = apiClient.getList("/restaurants/city/" + user.address().city(), new TypeReference<>() {
             });
 
             if (restaurants.isEmpty()) {
@@ -154,14 +154,16 @@ public class UserMenu {
         }
     }
 
-
+// Zeigt alle GroupOrders mit selber PLZ des Users an
     private void showAllGroupOrders() {
         try {
-            List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders", new TypeReference<>() {
+            ConsoleClient.UserResponse user = apiClient.get("/users/" + loggedInUserEmail, ConsoleClient.UserResponse.class);
+
+            List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders/by-postal/"+ user.address().postalCode(), new TypeReference<>() {
             });
 
             if (groupOrders.isEmpty()) {
-                System.out.println("Es gibt aktuell keine GroupOrders.");
+                System.out.println("Es gibt aktuell keine GroupOrders in deiner Nähe.");
                 return;
             }
 
@@ -171,11 +173,11 @@ public class UserMenu {
                 try {
                     restaurant = apiClient.get("/restaurants/"+ groupOrder.restaurantId(),ConsoleClient.RestaurantResponse.class);
                 } catch (Exception exception) {
-                    System.out.println("Fehler beim Laden des Restaurants" + exception.getMessage());
+                    System.out.println("Fehler beim Laden der Restaurants, um die GroupOrders in deiner Nähe anzuzeigen" + exception.getMessage());
                 }
 
                 System.out.println();
-                System.out.println("ID: " + groupOrder.id());
+                System.out.println("GroupOrder-ID: " + groupOrder.id());
                 System.out.println("Restaurant-ID: " + groupOrder.restaurantId());
                 System.out.println("Restaurant-Name:" + restaurant.name());
                 System.out.println("Restaurant-Adresse: " + restaurant.address());
