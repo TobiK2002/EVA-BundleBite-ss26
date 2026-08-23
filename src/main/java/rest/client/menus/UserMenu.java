@@ -12,7 +12,7 @@ public class UserMenu {
 
     private final Scanner scanner;
     private final ApiClient apiClient;
-    private String loggedInUserEmail;
+    private ConsoleClient.UserResponse loggedInUser;
 
     private static final String SERVER_HOST = "localhost";
     private static final int SOCKET_PORT = 8081;
@@ -23,9 +23,10 @@ public class UserMenu {
         this.apiClient = apiClient;
     }
 
-    public void showUserMenu(String loggedInUserEmail) {
+    public void showUserMenu(ConsoleClient.UserResponse user) {
         boolean logout = false;
-        this.loggedInUserEmail=loggedInUserEmail;
+
+        this.loggedInUser = user;
 
         while (!logout) {
             System.out.println();
@@ -53,7 +54,7 @@ public class UserMenu {
                 case "7" -> showOrderEntriesByUserByGroupOrder();
                 case "8" -> updateOrderEntry();
                 case "0" -> {
-                    this.loggedInUserEmail = null;
+                    this.loggedInUser = null;
                     logout = true;
                 }
                 default -> System.out.println("Ungültige Eingabe.");
@@ -64,9 +65,8 @@ public class UserMenu {
 
     private void showAllRestaurants() {
         try {
-            ConsoleClient.UserResponse user = apiClient.get("/users/" + loggedInUserEmail, ConsoleClient.UserResponse.class);
 
-            List<ConsoleClient.RestaurantResponse> restaurants = apiClient.getList("/restaurants/city/" + user.address().city(), new TypeReference<>() {
+            List<ConsoleClient.RestaurantResponse> restaurants = apiClient.getList("/restaurants/city/" + loggedInUser.address().city(), new TypeReference<>() {
             });
 
             if (restaurants.isEmpty()) {
@@ -123,7 +123,7 @@ public class UserMenu {
 
     private ConsoleClient.GroupOrderResponse createGroupOrder() {
         try {
-            if (loggedInUserEmail == null) {
+            if (loggedInUser == null) {
                 System.out.println("Du musst als User eingeloggt sein.");
                 return null;
             }
@@ -139,7 +139,7 @@ public class UserMenu {
 
             ConsoleClient.CreateGroupOrderRequest request = new ConsoleClient.CreateGroupOrderRequest(
                     restaurantId,
-                    this.loggedInUserEmail,
+                    this.loggedInUser.email(),
                     expiresAt
             );
 
@@ -157,9 +157,8 @@ public class UserMenu {
 // Zeigt alle GroupOrders mit selber PLZ des Users an
     private void showAllGroupOrders() {
         try {
-            ConsoleClient.UserResponse user = apiClient.get("/users/" + loggedInUserEmail, ConsoleClient.UserResponse.class);
 
-            List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders/by-postal/"+ user.address().postalCode(), new TypeReference<>() {
+            List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders/by-postal/"+ loggedInUser.address().postalCode(), new TypeReference<>() {
             });
 
             if (groupOrders.isEmpty()) {
@@ -192,11 +191,11 @@ public class UserMenu {
 
     private void showMyGroupOrders() {
         try {
-            if (loggedInUserEmail == null) {
+            if (loggedInUser == null) {
                 System.out.println("Du musst als User eingeloggt sein.");
                 return;
             }
-            List<ConsoleClient.GroupOrderResponse> groupOrders= apiClient.getList("/group-orders/forUser/"+ this.loggedInUserEmail, new TypeReference<>(){});
+            List<ConsoleClient.GroupOrderResponse> groupOrders= apiClient.getList("/group-orders/forUser/"+ this.loggedInUser.email(), new TypeReference<>(){});
 
             if (groupOrders.isEmpty()) {
                 System.out.println("Du bist aktuell in keiner GroupOrder.");
@@ -243,7 +242,7 @@ public class UserMenu {
 
     private void joinGroupOrder() {
         try {
-            if (loggedInUserEmail == null) {
+            if (loggedInUser == null) {
                 System.out.println("Du musst als User eingeloggt sein.");
                 return;
             }
@@ -294,7 +293,7 @@ public class UserMenu {
             int quantity = Integer.parseInt(scanner.nextLine());
 
             ConsoleClient.CreateOrderEntryRequest request = new ConsoleClient.CreateOrderEntryRequest(
-                    this.loggedInUserEmail,
+                    this.loggedInUser.email(),
                     dishId,
                     quantity
             );
@@ -315,13 +314,13 @@ public class UserMenu {
     private void showOrderEntriesByUserByGroupOrder() {
         UUID groupOrderId;
         try {
-            if (loggedInUserEmail == null) {
+            if (loggedInUser == null) {
                 System.out.println("Du musst als User eingeloggt sein.");
                 return;
             }
             //Group-Orders anzeigen, in welche User sich befindet
             try {
-                List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders/forUser/" + this.loggedInUserEmail, new TypeReference<>() {
+                List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders/forUser/" + this.loggedInUser.email(), new TypeReference<>() {
                 });
 
                 if (groupOrders.isEmpty()) {
@@ -341,7 +340,7 @@ public class UserMenu {
                 return;
             }
             //Für die ausgewählte GroupOrder, in welche User sich befindet, werden seine Einträge gelistet
-            List<ConsoleClient.OrderEntryResponse> orderEntries = apiClient.getList("/group-orders/with-email/"+ groupOrderId + "/order-entries/" + this.loggedInUserEmail, new TypeReference<>() {
+            List<ConsoleClient.OrderEntryResponse> orderEntries = apiClient.getList("/group-orders/with-email/"+ groupOrderId + "/order-entries/" + this.loggedInUser.email(), new TypeReference<>() {
             });
 
             for (ConsoleClient.OrderEntryResponse orderEntry : orderEntries) {

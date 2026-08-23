@@ -142,7 +142,7 @@ public class ConsoleClient {
             loggedInUserEmail = user.email;
 
             System.out.println("Login erfolgreich. Willkommen " + user.name() + "!");
-            userMenu.showUserMenu(loggedInUserEmail);
+            userMenu.showUserMenu(user);
 
         } catch (Exception exception) {
             System.out.println("Login fehlgeschlagen: " + exception.getMessage());
