@@ -117,6 +117,31 @@ public class GroupOrderService {
         return orderEntries;
     }
 
+    public List<GroupOrder> getAllGroupOrdersForUser(String userEmail) {
+        //Validierung
+        userService.getUserByEmail(userEmail);
+
+        List<GroupOrder> groupOrdersForUser = new ArrayList<>();
+
+        for (GroupOrder groupOrder : getAllGroupOrders()) {
+            if (Objects.equals(groupOrder.getCreatorUserEmail(), userEmail)) {
+                groupOrdersForUser.add(groupOrder);
+                continue;
+            }
+            // Wenn der Angefragt User Ersteller ist, ist eh schon Teil der GroupOrder
+            //Anderfalls werden die Order Entries der jeweiligen Grouporder nach dem User durchsucht
+
+            for (OrderEntry orderEntry : getAllOrderEntriesForGroupOrder(groupOrder.getId())) {
+                if (Objects.equals(orderEntry.getUserEmail(), userEmail)) {
+                    groupOrdersForUser.add(groupOrder);
+                    break;
+                }
+            }
+        }
+
+        return groupOrdersForUser;
+    }
+
     public List<OrderEntry> getAllOrderEntriesByGroupOrderByUser(String userEmail, UUID groupOrderId) {
         List<OrderEntry> allOrderEntries = getAllOrderEntriesForGroupOrder(groupOrderId);
         List<OrderEntry> orderEntriesByGroupOrderByUser = new ArrayList<>();

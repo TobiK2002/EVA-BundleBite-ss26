@@ -34,8 +34,10 @@ public class UserMenu {
             System.out.println("2. Gerichte eines Restaurants anzeigen");
             System.out.println("3. GroupOrder erstellen");
             System.out.println("4. Alle GroupOrders anzeigen");
-            System.out.println("5. GroupOrder beitreten");
-            System.out.println("6. OrderEntry bearbeiten");
+            System.out.println("5. Meine GroupOrders anzeigen");
+            System.out.println("6. GroupOrder beitreten");
+            System.out.println("7. Meine OrderEntries einer GroupOrder anzeigen");
+            System.out.println("8. OrderEntry bearbeiten");
             System.out.println("0. Logout");
             System.out.print("Auswahl: ");
 
@@ -46,8 +48,10 @@ public class UserMenu {
                 case "2" -> showDishesForRestaurant();
                 case "3" -> createGroupOrder();
                 case "4" -> showAllGroupOrders();
-                case "5" -> joinGroupOrder();
-                case "6" -> updateOrderEntry();
+                case "5" -> showMyGroupOrders();
+                case "6" -> joinGroupOrder();
+                case "7" -> showOrderEntriesByUserByGroupOrder();
+                case "8" -> updateOrderEntry();
                 case "0" -> {
                     this.loggedInUserEmail = null;
                     logout = true;
@@ -171,6 +175,32 @@ public class UserMenu {
         }
     }
 
+    private void showMyGroupOrders() {
+        try {
+            if (loggedInUserEmail == null) {
+                System.out.println("Du musst als User eingeloggt sein.");
+                return;
+            }
+            List<ConsoleClient.GroupOrderResponse> groupOrders= apiClient.getList("/group-orders/"+ this.loggedInUserEmail, new TypeReference<>(){});
+
+            if (groupOrders.isEmpty()) {
+                System.out.println("Du bist aktuell in keiner GroupOrder.");
+                return;
+            }
+
+            for (ConsoleClient.GroupOrderResponse groupOrder : groupOrders) {
+                System.out.println();
+                System.out.println("ID: " + groupOrder.id());
+                System.out.println("Restaurant-ID: " + groupOrder.restaurantId());
+                System.out.println("Creator-User-ID: " + groupOrder.creatorUserEmail());
+                System.out.println("ExpiresAt: " + groupOrder.expiresAt());
+            }
+
+        } catch (Exception exception) {
+            System.out.println("Deine GroupOrders konnten nicht geladen werden: " + exception.getMessage());
+        }
+    }
+
     private void  showAllGroupOrdersWithIndex(List<ConsoleClient.GroupOrderResponse> groupOrders) {
         for (ConsoleClient.GroupOrderResponse groupOrder : groupOrders) {
             System.out.println();
@@ -250,6 +280,60 @@ public class UserMenu {
             System.out.println("OrderEntry-ID: " + orderEntry.id());
         } catch (Exception exception) {
             System.out.println("Beitritt zur GroupOrder fehlgeschlagen: " + exception.getMessage());
+        }
+    }
+
+    private void showOrderEntriesByUserByGroupOrder() {
+        UUID groupOrderId;
+        try {
+            if (loggedInUserEmail == null) {
+                System.out.println("Du musst als User eingeloggt sein.");
+                return;
+            }
+            try {
+                List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders/" + this.loggedInUserEmail, new TypeReference<>() {
+                });
+
+                showAllGroupOrdersWithIndex(groupOrders);
+
+                System.out.print("GroupOrder-Zahl für Menüauswahl: ");
+                groupOrderId=groupOrders.get(Integer.parseInt(scanner.nextLine())).id();
+
+            } catch (Exception exception) {
+                System.out.println("Deine GroupOrders konnten nicht geladen werden" + exception.getMessage());
+                return;
+            }
+            //Für die ausgewählte GroupOrder, in welche User sich befindet, werden seine Einträge gelistet
+            List<ConsoleClient.OrderEntryResponse> orderEntries = apiClient.getList("/group-orders/with-email/"+ groupOrderId + "/order-entries/" + this.loggedInUserEmail, new TypeReference<>() {
+            });
+
+            for (ConsoleClient.OrderEntryResponse orderEntry : orderEntries) {
+                //Default Dish Response, wenn API Call nicht klappt
+                ConsoleClient.DishResponse dish = new ConsoleClient.DishResponse(
+                        orderEntry.dishId(),
+                        null,
+                        "ungültig",
+                        "ungültig",
+                        0,
+                        List.of()
+                );
+                //Lade Gericht
+                try {
+                    dish = apiClient.get("/dishes/" + orderEntry.dishId(), ConsoleClient.DishResponse.class);
+                } catch (Exception exception) {
+                    System.out.println("Fehler beim Laden des Gerichtes");
+                }
+                System.out.println();
+                System.out.println("ID: " + orderEntry.id());
+                System.out.println("Gericht-ID: " + orderEntry.dishId());
+                System.out.println("Name: " + dish.name());
+                System.out.println("Preis: " + dish.price());
+                System.out.println("Menge: " + orderEntry.quantity());
+                System.out.println("Gesamtpreis des Eintrags: " + orderEntry.sumPrice());
+            }
+
+        } catch (Exception exception) {
+            System.out.println("OrderEntries konnten nicht geladen werden: " + exception.getMessage());
         }
     }
 

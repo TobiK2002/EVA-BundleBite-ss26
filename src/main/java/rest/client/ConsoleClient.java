@@ -288,7 +288,8 @@ public class ConsoleClient {
             UUID id,
             String userEmail,
             UUID dishId,
-            int quantity
+            int quantity,
+            double sumPrice
     ) {
     }
 }

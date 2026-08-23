@@ -226,6 +226,11 @@ public class BundleBiteController {
         return groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId);
     }
 
+    @GetMapping("/group-orders/{userEmail}/")
+    public List<GroupOrder> getGroupOrdersForUser(@PathVariable String userEmail) {
+        return groupOrderService.getAllGroupOrdersForUser(userEmail);
+    }
+
     @GetMapping("/group-orders/with-email/{groupOrderId}/order-entries/{userEmail}")
     public List<OrderEntry> getOrderEntriesByUserByGroupOrder(@PathVariable UUID groupOrderId, @PathVariable String userEmail) {
         return groupOrderService.getAllOrderEntriesByGroupOrderByUser(userEmail, groupOrderId);
