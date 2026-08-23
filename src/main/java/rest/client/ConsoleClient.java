@@ -125,7 +125,7 @@ public class ConsoleClient {
             System.out.println("User wurde erstellt.");
             System.out.println("Deine User-E-Mail: " + user.email());
 
-            userMenu.showUserMenu(loggedInUserEmail);
+            userMenu.showUserMenu(user);
 
         } catch (Exception exception) {
             System.out.println("User konnte nicht erstellt werden: " + exception.getMessage());
