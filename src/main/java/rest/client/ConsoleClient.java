@@ -120,12 +120,16 @@ public class ConsoleClient {
 
             UserResponse user = apiClient.post("/users", request, UserResponse.class);
 
+            NotificationClient notificationClient = new NotificationClient(user.email);
+            notificationClient.connect();
+
             loggedInUserEmail = user.email;
 
             System.out.println("User wurde erstellt.");
             System.out.println("Deine User-E-Mail: " + user.email());
 
             userMenu.showUserMenu(user);
+            notificationClient.close();
 
         } catch (Exception exception) {
             System.out.println("User konnte nicht erstellt werden: " + exception.getMessage());
@@ -139,10 +143,15 @@ public class ConsoleClient {
 
             UserResponse user = apiClient.get("/users/" + userEmail, UserResponse.class);
 
+            NotificationClient notificationClient = new NotificationClient(user.email);
+            notificationClient.connect();
+
             loggedInUserEmail = user.email;
 
             System.out.println("Login erfolgreich. Willkommen " + user.name() + "!");
             userMenu.showUserMenu(user);
+
+            notificationClient.close();
 
         } catch (Exception exception) {
             System.out.println("Login fehlgeschlagen: " + exception.getMessage());

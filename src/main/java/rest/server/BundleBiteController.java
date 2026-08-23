@@ -19,15 +19,19 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api")
 public class BundleBiteController {
+    private final NotificationServer notificationServer;
 
     private final DishService dishService = new DishService();
     private final RestaurantService restaurantService = new RestaurantService(dishService);
-
     private final UserService userService = new UserService();
     private final OrderEntryService orderEntryService = new OrderEntryService();
 
     private final GroupOrderService groupOrderService =
             new GroupOrderService(restaurantService, userService, orderEntryService);
+
+    public BundleBiteController(NotificationServer notificationServer) {
+        this.notificationServer = notificationServer;
+    }
 
     // -------------------------
     // Users
@@ -213,12 +217,19 @@ public class BundleBiteController {
             @PathVariable UUID groupOrderId,
             @RequestBody CreateOrderEntryRequest request
     ) {
-        return groupOrderService.createOrderEntryForGroupOrder(
+        OrderEntry orderEntry =  groupOrderService.createOrderEntryForGroupOrder(
                 groupOrderId,
                 request.userEmail(),
                 request.dishId(),
                 request.quantity()
         );
+        GroupOrder groupOrder = groupOrderService.getGroupOrderById(groupOrderId);
+
+        notificationServer.notifyUser(
+                groupOrder.getCreatorUserEmail(),
+                "In deiner GroupOrder wurde ein Bestelleintrag hinzugefügt.");
+        return orderEntry;
+
     }
 
     @GetMapping("/group-orders/{groupOrderId}/order-entries")
