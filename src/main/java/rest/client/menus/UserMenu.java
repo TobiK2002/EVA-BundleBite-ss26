@@ -1,5 +1,6 @@
 package rest.client.menus;
 
+import com.sun.source.tree.ReturnTree;
 import rest.client.ApiClient;
 import rest.client.ConsoleClient;
 import tools.jackson.core.type.TypeReference;
@@ -86,6 +87,42 @@ public class UserMenu {
         }
     }
 
+    private UUID showAllRestaurantsWithIndex() {
+        try {
+
+            List<ConsoleClient.RestaurantResponse> restaurants = apiClient.getList("/restaurants/city/" + loggedInUser.address().city(), new TypeReference<>() {
+            });
+
+            if (restaurants.isEmpty()) {
+                System.out.println("Es gibt noch keine Restaurants.");
+                return null;
+            }
+
+            int index = 0;
+
+            for (ConsoleClient.RestaurantResponse restaurant : restaurants) {
+                System.out.println();
+                System.out.println("Index: " + index);
+                System.out.println("ID: " + restaurant.id());
+                System.out.println("Name: " + restaurant.name());
+                System.out.println("Adresse: " + restaurant.address());
+                System.out.println("Mindestbestellwert: " + restaurant.minOrderValue());
+                index ++;
+            }
+
+            System.out.println("Restaurant-Index: ");
+            int chosenIndex = Integer.parseInt(scanner.nextLine());
+
+            UUID chosenId = restaurants.get(chosenIndex).id();
+
+            return chosenId;
+        } catch (Exception exception) {
+            System.out.println("Restaurants konnten nicht geladen werden: " + exception.getMessage());
+            return null;
+        }
+
+    }
+
     private void showDishesForRestaurant() {
         try {
             System.out.print("Restaurant-ID: ");
@@ -120,6 +157,39 @@ public class UserMenu {
         }
     }
 
+    private UUID showDishesForRestaurantWithIndex(UUID restaurantId) {
+        try {
+            List<ConsoleClient.DishResponse> dishes = apiClient.getList("/restaurants/" + restaurantId + "/dishes", new TypeReference<>() {
+            });
+
+            if (dishes.isEmpty()) {
+                System.out.println("Dieses Restaurant hat noch keine Gerichte.");
+                return null;
+            }
+
+            int index = 0;
+
+            for (ConsoleClient.DishResponse dish : dishes) {
+                System.out.println();
+                System.out.println("Index: " + index);
+                System.out.println("ID: " + dish.id());
+                System.out.println("Name: " + dish.name());
+                System.out.println("Beschreibung: " + dish.description());
+                System.out.println("Preis: " + dish.price());
+                System.out.println("Zutaten: " + dish.ingredients());
+                index ++;
+            }
+            int chosenIndex = Integer.parseInt(scanner.nextLine());
+            UUID chosenId = dishes.get(chosenIndex).id();
+            return chosenId;
+
+
+        } catch (Exception exception) {
+            System.out.println("Gerichte konnten nicht geladen werden: " + exception.getMessage());
+            return null;
+        }
+    }
+
 
     private ConsoleClient.GroupOrderResponse createGroupOrder() {
         try {
@@ -129,10 +199,7 @@ public class UserMenu {
             }
 
             System.out.println("Wähle ein Restaurant aus:");
-            showAllRestaurants();
-
-            System.out.print("Restaurant-ID: ");
-            UUID restaurantId = UUID.fromString(scanner.nextLine());
+            UUID restaurantId = showAllRestaurantsWithIndex();
 
             System.out.print("Ablaufzeit in Minuten: ");
             int expiresAt = Integer.parseInt(scanner.nextLine());
@@ -284,10 +351,11 @@ public class UserMenu {
             ConsoleClient.GroupOrderResponse groupOrder = apiClient.get("/group-orders/" + groupOrderId, ConsoleClient.GroupOrderResponse.class);
 
             System.out.println("Gerichte des Restaurants:");
-            showDishesForRestaurant(groupOrder.restaurantId());
-
-            System.out.print("Dish-ID: ");
-            UUID dishId = UUID.fromString(scanner.nextLine());
+            UUID dishId = showDishesForRestaurantWithIndex(groupOrder.restaurantId());
+            if (dishId == null) {
+                System.out.print("Fehler bei der Auswahl des Gerichts");
+                return;
+            }
 
             System.out.print("Menge: ");
             int quantity = Integer.parseInt(scanner.nextLine());
