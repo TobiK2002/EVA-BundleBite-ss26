@@ -12,10 +12,7 @@ import Core.Services.RestaurantService;
 import Core.Services.UserService;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
@@ -224,6 +221,7 @@ public class BundleBiteController {
     @DeleteMapping("/group-orders/{groupOrderId}")
     public void deleteGroupOrder(@PathVariable UUID groupOrderId) {
         stopGroupOrderThread(groupOrderId);
+        groupOrderThreads.remove(groupOrderId);
         groupOrderService.deleteGroupOrder(groupOrderId);
     }
 
@@ -243,12 +241,24 @@ public class BundleBiteController {
                 request.quantity()
         );
         GroupOrder groupOrder = groupOrderService.getGroupOrderById(groupOrderId);
+        //Ersteller benachrichtigen
+
 
         notificationServer.notifyUser(
                 groupOrder.getCreatorUserEmail(),
-                "In deiner GroupOrder wurde ein Bestelleintrag hinzugefügt.");
-        return orderEntry;
+                "In die von dir erstellte GroupOrder wurde ein Bestelleintrag hinzugefügt.");
 
+        //Alle anderen User benachrichtigen
+        Set<String> userEmails = new HashSet<>();
+        for (OrderEntry entry : groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId)) {
+            userEmails.add(entry.getUserEmail());
+        }
+        for (String email : userEmails) {
+            notificationServer.notifyUser(
+                    email, "Ein anderer Nutzer hat einen Bestelleintrag zur GroupOrder hinzugefügt."
+            );
+        }
+        return orderEntry;
     }
 
     @GetMapping("/group-orders/{groupOrderId}/order-entries")
@@ -291,16 +301,6 @@ public class BundleBiteController {
     ) {
         groupOrderService.deleteOrderEntry(groupOrderId, orderEntryId);
         notificationServer.notifyUser(groupOrderService.getGroupOrderById(groupOrderId).getCreatorUserEmail(),"In der von dir erstellten GroupOrder " + groupOrderId + " wurde ein Eintrag gelöscht");
-
-        //Wenn dies der letzte Entry in der GroupOrder war:
-        if (groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId).isEmpty()) {
-            //Kopie für E-Mail erstellen, weil das echte Objekt danach gelöscht wird
-            GroupOrder CopyOfGroupOrder = groupOrderService.getGroupOrderById(groupOrderId);
-
-            stopGroupOrderThread(groupOrderId);
-            groupOrderService.deleteGroupOrder(groupOrderId);
-            notificationServer.notifyUser(CopyOfGroupOrder.getCreatorUserEmail(),"Die von dir erstellte GroupOrder " + groupOrderId + " wurde automatisch gelöscht, da der letzte Entry gelöscht wurde.");
-        }
     }
 
     //
