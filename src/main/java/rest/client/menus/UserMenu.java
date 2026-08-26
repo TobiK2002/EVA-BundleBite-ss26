@@ -38,7 +38,7 @@ public class UserMenu {
             System.out.println("3. GroupOrder erstellen");
             System.out.println("4. Alle GroupOrders anzeigen");
             System.out.println("5. Meine GroupOrders anzeigen");
-            System.out.println("6. GroupOrder beitreten");
+            System.out.println("6. GroupOrder beitreten oder OrderEntry hinzufügen");
             System.out.println("7. Meine OrderEntries einer GroupOrder anzeigen");
             System.out.println("8. OrderEntry bearbeiten");
             System.out.println("9. OrderEntry löschen");
@@ -378,7 +378,7 @@ public class UserMenu {
                     ConsoleClient.OrderEntryResponse.class
             );
 
-            System.out.println("Du bist der GroupOrder beigetreten.");
+            System.out.println("Du bist der GroupOrder beigetreten oder hast einen Entry hinzugefügt.");
             System.out.println("OrderEntry-ID: " + orderEntry.id());
         } catch (Exception exception) {
             System.out.println("Beitritt zur GroupOrder fehlgeschlagen: " + exception.getMessage());
