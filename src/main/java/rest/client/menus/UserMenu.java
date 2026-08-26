@@ -5,6 +5,7 @@ import rest.client.ApiClient;
 import rest.client.ConsoleClient;
 import tools.jackson.core.type.TypeReference;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
@@ -40,6 +41,7 @@ public class UserMenu {
             System.out.println("6. GroupOrder beitreten");
             System.out.println("7. Meine OrderEntries einer GroupOrder anzeigen");
             System.out.println("8. OrderEntry bearbeiten");
+            System.out.println("9. OrderEntry löschen");
             System.out.println("0. Logout");
             System.out.print("Auswahl: ");
 
@@ -54,6 +56,7 @@ public class UserMenu {
                 case "6" -> joinGroupOrder();
                 case "7" -> showOrderEntriesByUserByGroupOrder();
                 case "8" -> updateOrderEntry();
+                case "9" -> deleteOrderEntry();
                 case "0" -> {
                     this.loggedInUser = null;
                     logout = true;
@@ -256,21 +259,23 @@ public class UserMenu {
         }
     }
 
-    private void showMyGroupOrders() {
+    private List<ConsoleClient.GroupOrderResponse> showMyGroupOrders() {
+        List<ConsoleClient.GroupOrderResponse> groupOrders = new ArrayList<>();
         try {
             if (loggedInUser == null) {
                 System.out.println("Du musst als User eingeloggt sein.");
-                return;
+                return null;
             }
-            List<ConsoleClient.GroupOrderResponse> groupOrders= apiClient.getList("/group-orders/forUser/"+ this.loggedInUser.email(), new TypeReference<>(){});
+            groupOrders= apiClient.getList("/group-orders/forUser/"+ this.loggedInUser.email(), new TypeReference<>(){});
 
             if (groupOrders.isEmpty()) {
                 System.out.println("Du bist aktuell in keiner GroupOrder.");
-                return;
+                return null;
             }
 
             for (ConsoleClient.GroupOrderResponse groupOrder : groupOrders) {
                 System.out.println();
+                System.out.println("Index: " + groupOrders.indexOf(groupOrder));
                 System.out.println("ID: " + groupOrder.id());
                 System.out.println("Restaurant-ID: " + groupOrder.restaurantId());
                 System.out.println("Creator-User-ID: " + groupOrder.creatorUserEmail());
@@ -280,6 +285,7 @@ public class UserMenu {
         } catch (Exception exception) {
             System.out.println("Deine GroupOrders konnten nicht geladen werden: " + exception.getMessage());
         }
+        return groupOrders;
     }
 
     private void  showAllGroupOrdersWithIndex(List<ConsoleClient.GroupOrderResponse> groupOrders) {
@@ -379,36 +385,32 @@ public class UserMenu {
         }
     }
 
-    private void showOrderEntriesByUserByGroupOrder() {
-        UUID groupOrderId;
+    private List<ConsoleClient.OrderEntryResponse> showOrderEntriesByUserByGroupOrder() {
+        List<ConsoleClient.OrderEntryResponse> orderEntries = new ArrayList<>();
         try {
             if (loggedInUser == null) {
                 System.out.println("Du musst als User eingeloggt sein.");
-                return;
+                return null;
             }
             //Group-Orders anzeigen, in welche User sich befindet
-            try {
-                List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders/forUser/" + this.loggedInUser.email(), new TypeReference<>() {
-                });
 
-                if (groupOrders.isEmpty()) {
-                    System.out.println("Du bist aktuell in keiner GroupOrder, bitte erstell erst eine!");
-                    return;
-                }
-
-                System.out.println("Dies sind deine aktuellen GroupOrders, bitte wähle eine aus, um die Einträge zu sehen:\n ");
-                showAllGroupOrdersWithIndex(groupOrders);
-                System.out.println();
-
-                System.out.print("GroupOrder-Zahl für Menüauswahl: ");
-                groupOrderId=groupOrders.get(Integer.parseInt(scanner.nextLine())).id();
-
-            } catch (Exception exception) {
-                System.out.println("Deine GroupOrders konnten nicht geladen werden " + exception.getMessage());
-                return;
+            List<ConsoleClient.GroupOrderResponse> myGroupOrders = showMyGroupOrders();
+            //myGroupOrders = null wenn nicht als User eingeloggt oder in keiner GroupOrder, Konsolen-Ausgabe schon geschehen, deshalb nur return
+            if (myGroupOrders == null) {
+                return null;
             }
-            //Für die ausgewählte GroupOrder, in welche User sich befindet, werden seine Einträge gelistet
-            List<ConsoleClient.OrderEntryResponse> orderEntries = apiClient.getList("/group-orders/with-email/"+ groupOrderId + "/order-entries/" + this.loggedInUser.email(), new TypeReference<>() {
+
+            System.out.println("Bitte wähle den Index der GroupOrder (0 - " + (myGroupOrders.size()-1) + " für die du deine Entries anzeigen willst: ");
+            int chosenIndex = -1;
+            while (chosenIndex < 0 || chosenIndex >= myGroupOrders.size()) {
+                try { chosenIndex = Integer.parseInt(scanner.nextLine()); } catch (NumberFormatException e) { chosenIndex = -1; }
+
+            }
+
+            UUID chosenGroupOrderId = myGroupOrders.get(chosenIndex).id();
+
+            //Für die ausgewählte GroupOrder, in welcher User sich befindet, werden seine Einträge gelistet
+            orderEntries = apiClient.getList("/group-orders/with-email/"+ chosenGroupOrderId + "/order-entries/" + this.loggedInUser.email(), new TypeReference<>() {
             });
 
             for (ConsoleClient.OrderEntryResponse orderEntry : orderEntries) {
@@ -439,6 +441,7 @@ public class UserMenu {
         } catch (Exception exception) {
             System.out.println("OrderEntries konnten nicht geladen werden: " + exception.getMessage());
         }
+        return orderEntries;
     }
 
     private void updateOrderEntry() {
@@ -459,6 +462,63 @@ public class UserMenu {
             System.out.println("OrderEntry wurde aktualisiert.");
         } catch (Exception exception) {
             System.out.println("OrderEntry konnte nicht aktualisiert werden: " + exception.getMessage());
+        }
+    }
+
+    private void deleteOrderEntry() {
+        UUID chosenGroupOrderId = null;
+        UUID chosenOrderEntryId = null;
+        try {
+            //GroupOrders für User anzeigen und Auswählen
+            List<ConsoleClient.GroupOrderResponse> myGroupOrders = showMyGroupOrders();
+            //myGroupOrders = null wenn nicht als User eingeloggt oder in keiner GroupOrder, Konsolen-Ausgabe schon geschehen, deshalb nur return
+            if (myGroupOrders == null) {
+                return;
+            }
+            System.out.println("Bitte wähle den Index der GroupOrder bei welcher du einen Eintrag löschen möchtest: ");
+            int chosenIndex = -1;
+            while (chosenIndex < 0 || chosenIndex >= myGroupOrders.size()) {
+                try {
+                    chosenIndex = Integer.parseInt(scanner.nextLine());
+                } catch (NumberFormatException e) {
+                    chosenIndex = -1;
+                }
+            }
+            chosenGroupOrderId = myGroupOrders.get(chosenIndex).id();
+        } catch (Exception exception) {
+            System.out.println("Fehler beim Anzeigen oder Auswählen deiner GroupOrder: " + exception.getMessage());
+        }
+        try {
+            //OrderEntries des Users für ausgewählte GroupOrder anzeigen und Auswählen
+            List<ConsoleClient.OrderEntryResponse> myOrderEntriesForMyGroupOrder = showOrderEntriesByUserByGroupOrder();
+            if (myOrderEntriesForMyGroupOrder == null) {
+                return;
+            }
+            int chosenIndex = -1;
+            while (chosenIndex < 0 || chosenIndex >= myOrderEntriesForMyGroupOrder.size()) {
+                try {
+                    chosenIndex = Integer.parseInt(scanner.nextLine());
+                } catch (NumberFormatException e) {
+                    chosenIndex = -1;
+                }
+            }
+            chosenIndex = Integer.parseInt(scanner.nextLine());
+            chosenOrderEntryId = myOrderEntriesForMyGroupOrder.get(chosenIndex).id();
+        } catch (Exception exception) {
+            System.out.println("Fehler beim Anzeigen oder Auswählen der OrderEntries deiner ausgewählten GroupOrder: " + exception.getMessage());
+        }
+        if (chosenGroupOrderId != null && chosenOrderEntryId != null) {
+            try {
+                apiClient.delete("/group-orders/" + chosenGroupOrderId + "/order-entries/" + chosenOrderEntryId);
+                System.out.println("OrderEntry wurde gelöscht.");
+            } catch (Exception exception) {
+                System.out.println("OrderEntry konnte nicht gelöscht werden: " + exception.getMessage());
+            }
+
+
+
+
+
         }
     }
 }
