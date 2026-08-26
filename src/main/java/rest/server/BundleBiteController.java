@@ -241,21 +241,14 @@ public class BundleBiteController {
                 request.quantity()
         );
         GroupOrder groupOrder = groupOrderService.getGroupOrderById(groupOrderId);
-        //Ersteller benachrichtigen
-
-
-        notificationServer.notifyUser(
-                groupOrder.getCreatorUserEmail(),
-                "In die von dir erstellte GroupOrder wurde ein Bestelleintrag hinzugefügt.");
-
-        //Alle anderen User benachrichtigen
+        //Alle User benachrichtigen
         Set<String> userEmails = new HashSet<>();
         for (OrderEntry entry : groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId)) {
             userEmails.add(entry.getUserEmail());
         }
         for (String email : userEmails) {
             notificationServer.notifyUser(
-                    email, "Ein anderer Nutzer hat einen Bestelleintrag zur GroupOrder hinzugefügt."
+                    email, "Es wurde ein Bestelleintrag zur GroupOrder hinzugefügt."
             );
         }
         return orderEntry;
@@ -300,7 +293,17 @@ public class BundleBiteController {
             @PathVariable UUID orderEntryId
     ) {
         groupOrderService.deleteOrderEntry(groupOrderId, orderEntryId);
-        notificationServer.notifyUser(groupOrderService.getGroupOrderById(groupOrderId).getCreatorUserEmail(),"In der von dir erstellten GroupOrder " + groupOrderId + " wurde ein Eintrag gelöscht");
+
+        //Alle User, welche Entries in der Bestellung haben, benachrichtigen
+        Set<String> userEmails = new HashSet<>();
+        for (OrderEntry entry : groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId)) {
+            userEmails.add(entry.getUserEmail());
+        }
+        for (String email : userEmails) {
+            notificationServer.notifyUser(
+                    email, "Es wurde ein Bestelleintrag in GroupOrder " + groupOrderId + " gelöscht."
+            );
+        }
     }
 
     //
