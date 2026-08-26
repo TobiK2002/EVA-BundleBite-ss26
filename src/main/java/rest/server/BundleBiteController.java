@@ -271,6 +271,15 @@ public class BundleBiteController {
             @PathVariable UUID orderEntryId
     ) {
         groupOrderService.deleteOrderEntry(groupOrderId, orderEntryId);
+        notificationServer.notifyUser(groupOrderService.getGroupOrderById(groupOrderId).getCreatorUserEmail(),"In der von dir erstellten GroupOrder " + groupOrderId + " wurde ein Eintrag gelöscht");
+
+        //Wenn dies der letzte Entry in der GroupOrder war:
+        if (groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId).isEmpty()) {
+            //Kopie für E-Mail erstellen, weil das echte Objekt danach gelöscht wird
+            GroupOrder CopyOfGroupOrder = groupOrderService.getGroupOrderById(groupOrderId);
+            groupOrderService.deleteGroupOrder(groupOrderId);
+            notificationServer.notifyUser(CopyOfGroupOrder.getCreatorUserEmail(),"Die von dir erstellte GroupOrder " + groupOrderId + " wurde automatisch gelöscht, da es keine Entries mehr gab.");
+        }
     }
 
     // -------------------------
