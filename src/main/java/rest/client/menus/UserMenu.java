@@ -514,11 +514,6 @@ public class UserMenu {
             } catch (Exception exception) {
                 System.out.println("OrderEntry konnte nicht gelöscht werden: " + exception.getMessage());
             }
-
-
-
-
-
         }
     }
 }

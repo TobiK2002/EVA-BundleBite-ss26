@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api")
@@ -28,6 +30,9 @@ public class BundleBiteController {
 
     private final GroupOrderService groupOrderService =
             new GroupOrderService(restaurantService, userService, orderEntryService);
+
+    private final Map<UUID, GroupOrderThread> groupOrderThreads =
+            new ConcurrentHashMap<>();
 
     public BundleBiteController(NotificationServer notificationServer) {
         this.notificationServer = notificationServer;
@@ -183,11 +188,24 @@ public class BundleBiteController {
 
     @PostMapping("/group-orders")
     public GroupOrder createGroupOrder(@RequestBody CreateGroupOrderRequest request) {
-        return groupOrderService.createGroupOrder(
+        GroupOrder groupOrder = groupOrderService.createGroupOrder(
                 request.restaurantId(),
                 request.creatorUserEmail(),
                 request.expiresAt()
         );
+
+        GroupOrderThread groupOrderThread = new GroupOrderThread(
+                groupOrder.getId(),
+                groupOrder.getExpiresAt(),
+                groupOrderService,
+                notificationServer
+        );
+
+        groupOrderThreads.put(groupOrder.getId(), groupOrderThread);
+
+        groupOrderThread.start();
+
+        return groupOrder;
     }
 
     @GetMapping("/group-orders")
@@ -205,6 +223,7 @@ public class BundleBiteController {
 
     @DeleteMapping("/group-orders/{groupOrderId}")
     public void deleteGroupOrder(@PathVariable UUID groupOrderId) {
+        stopGroupOrderThread(groupOrderId);
         groupOrderService.deleteGroupOrder(groupOrderId);
     }
 
@@ -277,8 +296,22 @@ public class BundleBiteController {
         if (groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId).isEmpty()) {
             //Kopie für E-Mail erstellen, weil das echte Objekt danach gelöscht wird
             GroupOrder CopyOfGroupOrder = groupOrderService.getGroupOrderById(groupOrderId);
+
+            stopGroupOrderThread(groupOrderId);
             groupOrderService.deleteGroupOrder(groupOrderId);
-            notificationServer.notifyUser(CopyOfGroupOrder.getCreatorUserEmail(),"Die von dir erstellte GroupOrder " + groupOrderId + " wurde automatisch gelöscht, da es keine Entries mehr gab.");
+            notificationServer.notifyUser(CopyOfGroupOrder.getCreatorUserEmail(),"Die von dir erstellte GroupOrder " + groupOrderId + " wurde automatisch gelöscht, da der letzte Entry gelöscht wurde.");
+        }
+    }
+
+    //
+    //HELPER METHODEN
+    //
+    private void stopGroupOrderThread(UUID groupOrderId) {
+        GroupOrderThread groupOrderThread =
+                groupOrderThreads.remove(groupOrderId);
+
+        if (groupOrderThread != null) {
+            groupOrderThread.interrupt();
         }
     }
 
