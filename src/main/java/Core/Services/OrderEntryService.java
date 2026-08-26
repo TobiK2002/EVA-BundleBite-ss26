@@ -56,6 +56,7 @@ public class OrderEntryService {
         if (entry == null) {
             throw OrderEntryException.orderEntryDoesNotExist();
         }
+
     }
 
     public void deleteAllOrderEntries() {

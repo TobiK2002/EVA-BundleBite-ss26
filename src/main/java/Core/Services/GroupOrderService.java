@@ -186,9 +186,13 @@ public class GroupOrderService {
         if (!groupOrder.getAllOrderEntryIds().contains(orderEntryId)) {
             throw GroupOrderException.OrderEntryNotFound();
         }
-
         groupOrder.dropOrderEntry(orderEntryId);
         orderEntryService.deleteOrderEntry(orderEntryId);
+        //Wenn der letzte GroupOrder-Eintrag aus der GroupOrder gelöscht wurde
+        if (groupOrder.getAllOrderEntryIds().isEmpty() && orderEntryService.getAllOrderEntries().isEmpty()) {
+            deleteGroupOrder(groupOrderId);
+            return;
+        }
         saveGroupOrder(groupOrder);
     }
 
