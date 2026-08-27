@@ -102,7 +102,7 @@ public class GroupOrderThread extends Thread{
                             email,
                             "Die GroupOrder " + groupOrderId + " wurde geschlossen," +
                                     " weil die Ablaufzeit erreicht wurde." +
-                                    " Die BEstellung wurde erfolgreich aufgegeben."
+                                    " Die Bestellung wurde erfolgreich aufgegeben."
                     );
                 }
             } else {
