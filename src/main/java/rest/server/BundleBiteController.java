@@ -11,6 +11,8 @@ import Core.Services.OrderEntryService;
 import Core.Services.RestaurantService;
 import Core.Services.UserService;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,6 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @RestController
 @RequestMapping("/api")
 public class BundleBiteController {
+
+    private static final Logger logger = LoggerFactory.getLogger(BundleBiteController.class);
+
     private final NotificationServer notificationServer;
 
     private final DishService dishService = new DishService();
