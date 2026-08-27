@@ -10,9 +10,11 @@ import Core.Models.exceptions.OrderEntryException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class GroupOrderService {
     private final Map<UUID, GroupOrder> groupOrdersById = new ConcurrentHashMap<>();
+    private final Map<UUID, ReentrantLock> locksByGroupOrderId = new ConcurrentHashMap<>();
     private final RestaurantService restaurantService;
     private final UserService userService;
     private final OrderEntryService orderEntryService;
@@ -69,13 +71,20 @@ public class GroupOrderService {
     }
 
     public void deleteGroupOrder(UUID id) {
-        GroupOrder groupOrder = groupOrdersById.remove(id);
-        if (groupOrder == null) {
-            throw GroupOrderException.GroupOrderDoesNotExist();
-        }
+        ReentrantLock lock = getLock(id);
+        lock.lock();
 
-        for (UUID orderEntryId : groupOrder.getAllOrderEntryIds()) {
-            orderEntryService.deleteOrderEntry(orderEntryId);
+        try {
+            GroupOrder groupOrder = groupOrdersById.remove(id);
+            if (groupOrder == null) {
+                throw GroupOrderException.GroupOrderDoesNotExist();
+            }
+
+            for (UUID orderEntryId : groupOrder.getAllOrderEntryIds()) {
+                orderEntryService.deleteOrderEntry(orderEntryId);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -85,21 +94,28 @@ public class GroupOrderService {
     }
 
     public OrderEntry createOrderEntryForGroupOrder(UUID groupOrderId, String userEmail, UUID dishId, int quantity) {
-        GroupOrder groupOrder = getGroupOrderById(groupOrderId);
-        validateOrderEntryData(groupOrder, userEmail, dishId, quantity);
+        ReentrantLock lock = getLock(groupOrderId);
+        lock.lock();
+        try {
 
-        Dish dish = restaurantService.getDish(dishId);
-        OrderEntry orderEntry = orderEntryService.createOrderEntry(
-                userEmail,
-                dishId,
-                dish.getName(),
-                dish.getPrice(),
-                quantity
-        );
+            GroupOrder groupOrder = getGroupOrderById(groupOrderId);
+            validateOrderEntryData(groupOrder, userEmail, dishId, quantity);
 
-        groupOrder.addOrderEntry(orderEntry.getId());
-        saveGroupOrder(groupOrder);
-        return orderEntry;
+            Dish dish = restaurantService.getDish(dishId);
+            OrderEntry orderEntry = orderEntryService.createOrderEntry(
+                    userEmail,
+                    dishId,
+                    dish.getName(),
+                    dish.getPrice(),
+                    quantity
+            );
+
+            groupOrder.addOrderEntry(orderEntry.getId());
+            saveGroupOrder(groupOrder);
+            return orderEntry;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public OrderEntry getOrderEntry(UUID orderEntryId) {
@@ -154,41 +170,55 @@ public class GroupOrderService {
     }
 
     public void updateOrderEntry(UUID groupOrderId, UUID orderEntryId, int quantity) {
-        GroupOrder groupOrder = getGroupOrderById(groupOrderId);
-        if (!groupOrder.getAllOrderEntryIds().contains(orderEntryId)) {
-            throw GroupOrderException.OrderEntryNotFound();
+        ReentrantLock lock = getLock(groupOrderId);
+        lock.lock();
+
+        try {
+            GroupOrder groupOrder = getGroupOrderById(groupOrderId);
+            if (!groupOrder.getAllOrderEntryIds().contains(orderEntryId)) {
+                throw GroupOrderException.OrderEntryNotFound();
+            }
+
+            OrderEntry existingOrderEntry = orderEntryService.getOrderEntryById(orderEntryId);
+            validateOrderEntryData(
+                    groupOrder,
+                    existingOrderEntry.getUserEmail(),
+                    existingOrderEntry.getDishId(),
+                    quantity
+            );
+
+            Dish dish = restaurantService.getDish(existingOrderEntry.getDishId());
+            OrderEntry updatedOrderEntry = new OrderEntry(
+                    orderEntryId,
+                    existingOrderEntry.getUserEmail(),
+                    existingOrderEntry.getDishId(),
+                    quantity,
+                    quantity * dish.getPrice(),
+                    dish.getName(),
+                    dish.getPrice()
+            );
+
+            orderEntryService.updateOrderEntry(updatedOrderEntry);
+        } finally {
+            lock.unlock();
         }
-
-        OrderEntry existingOrderEntry = orderEntryService.getOrderEntryById(orderEntryId);
-        validateOrderEntryData(
-                groupOrder,
-                existingOrderEntry.getUserEmail(),
-                existingOrderEntry.getDishId(),
-                quantity
-        );
-
-        Dish dish = restaurantService.getDish(existingOrderEntry.getDishId());
-        OrderEntry updatedOrderEntry = new OrderEntry(
-                orderEntryId,
-                existingOrderEntry.getUserEmail(),
-                existingOrderEntry.getDishId(),
-                quantity,
-                quantity * dish.getPrice(),
-                dish.getName(),
-                dish.getPrice()
-        );
-
-        orderEntryService.updateOrderEntry(updatedOrderEntry);
     }
 
     public void deleteOrderEntry(UUID groupOrderId, UUID orderEntryId) {
-        GroupOrder groupOrder = getGroupOrderById(groupOrderId);
-        if (!groupOrder.getAllOrderEntryIds().contains(orderEntryId)) {
-            throw GroupOrderException.OrderEntryNotFound();
+        ReentrantLock lock = getLock(groupOrderId);
+        lock.lock();
+
+        try {
+            GroupOrder groupOrder = getGroupOrderById(groupOrderId);
+            if (!groupOrder.getAllOrderEntryIds().contains(orderEntryId)) {
+                throw GroupOrderException.OrderEntryNotFound();
+            }
+            groupOrder.dropOrderEntry(orderEntryId);
+            orderEntryService.deleteOrderEntry(orderEntryId);
+            saveGroupOrder(groupOrder);
+        } finally {
+            lock.unlock();
         }
-        groupOrder.dropOrderEntry(orderEntryId);
-        orderEntryService.deleteOrderEntry(orderEntryId);
-        saveGroupOrder(groupOrder);
     }
 
     private void validateGroupOrder(GroupOrder groupOrder) {
@@ -221,12 +251,23 @@ public class GroupOrderService {
 
 
     private GroupOrder cloneGroupOrder(GroupOrder groupOrder) {
+        List<UUID> entries = groupOrder.getAllOrderEntryIds();
+        List<UUID> clonedEntries = new ArrayList<>();
+        clonedEntries.addAll(entries);
+
         return new GroupOrder(
                 groupOrder.getId(),
                 groupOrder.getRestaurantId(),
                 groupOrder.getCreatorUserEmail(),
                 groupOrder.getExpiresAt(),
-                groupOrder.getAllOrderEntryIds()
+                clonedEntries
+        );
+    }
+
+    private ReentrantLock getLock(UUID groupOrderId) {
+        return locksByGroupOrderId.computeIfAbsent(
+                groupOrderId,
+                id -> new ReentrantLock()
         );
     }
 }

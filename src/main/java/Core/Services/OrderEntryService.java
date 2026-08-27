@@ -8,10 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class OrderEntryService {
     private final Map<UUID, OrderEntry> orderEntriesById = new ConcurrentHashMap<>();
-
+    private final Map<UUID, ReentrantLock> locksByOrderEntryId =
+            new ConcurrentHashMap<>();
 
     public OrderEntry createOrderEntry(String userEmail, UUID dishId,String snapshotDishName, double snapshotDishPrice, int quantity) {
         UUID id = UUID.randomUUID();
@@ -44,17 +46,31 @@ public class OrderEntryService {
     }
 
     public void updateOrderEntry(OrderEntry updatedOrderEntry) throws OrderEntryException {
-        OrderEntry original = orderEntriesById.get(updatedOrderEntry.getId());
-        if (original == null) {
-            throw OrderEntryException.orderEntryDoesNotExist();
+        ReentrantLock lock = getLock(updatedOrderEntry.getId());
+        lock.lock();
+        try {
+
+            OrderEntry original = orderEntriesById.get(updatedOrderEntry.getId());
+            if (original == null) {
+                throw OrderEntryException.orderEntryDoesNotExist();
+            }
+
+            saveOrderEntry(updatedOrderEntry);
+        } finally {
+            lock.unlock();
         }
-        saveOrderEntry(updatedOrderEntry);
     }
 
     public void deleteOrderEntry(UUID id) throws OrderEntryException {
-        OrderEntry entry = orderEntriesById.remove(id);
-        if (entry == null) {
-            throw OrderEntryException.orderEntryDoesNotExist();
+        ReentrantLock lock = getLock(id);
+        lock.lock();
+        try {
+            OrderEntry entry = orderEntriesById.remove(id);
+            if (entry == null) {
+                throw OrderEntryException.orderEntryDoesNotExist();
+            }
+        } finally {
+            lock.unlock();
         }
 
     }
@@ -75,6 +91,12 @@ public class OrderEntryService {
                 orderEntry.getSumPrice(),
                 orderEntry.getSnapshotDishName(),
                 orderEntry.getSnapshotDishPrice()
+        );
+    }
+    private ReentrantLock getLock(UUID orderEntryId) {
+        return locksByOrderEntryId.computeIfAbsent(
+                orderEntryId,
+                id -> new ReentrantLock()
         );
     }
 }
