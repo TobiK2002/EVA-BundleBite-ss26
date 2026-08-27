@@ -190,12 +190,15 @@ public class BundleBiteController {
                 request.creatorUserEmail(),
                 request.expiresAt()
         );
+        UUID restaurantId = request.restaurantId();
+        Double minOrderPrice = restaurantService.getRestaurantById(restaurantId).getMinOrderValue();
 
         GroupOrderThread groupOrderThread = new GroupOrderThread(
                 groupOrder.getId(),
                 groupOrder.getExpiresAt(),
                 groupOrderService,
-                notificationServer
+                notificationServer,
+                minOrderPrice
         );
 
         groupOrderThreads.put(groupOrder.getId(), groupOrderThread);

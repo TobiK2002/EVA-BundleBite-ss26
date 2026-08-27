@@ -4,8 +4,10 @@ import Core.Models.GroupOrder;
 import Core.Models.OrderEntry;
 import Core.Models.exceptions.GroupOrderException;
 import Core.Services.GroupOrderService;
+import org.springframework.core.annotation.Order;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 public class GroupOrderThread extends Thread{
@@ -13,17 +15,20 @@ public class GroupOrderThread extends Thread{
     private final int expiresAtMinutes;
     private final GroupOrderService groupOrderService;
     private final NotificationServer notificationServer;
+    private Double minOrderPrice;
 
     public GroupOrderThread(
             UUID groupOrderId,
             int expiresAtMinutes,
             GroupOrderService groupOrderService,
-            NotificationServer notificationServer
+            NotificationServer notificationServer,
+            Double minOrderPrice
     ) {
         this.groupOrderId = groupOrderId;
         this.expiresAtMinutes = expiresAtMinutes;
         this.groupOrderService = groupOrderService;
         this.notificationServer = notificationServer;
+        this.minOrderPrice = minOrderPrice;
     }
 
     @Override
@@ -70,6 +75,14 @@ public class GroupOrderThread extends Thread{
             // GroupOrder und Beteiligte vor dem Löschen laden
             GroupOrder groupOrder = groupOrderService.getGroupOrderById(groupOrderId);
 
+            //gesamtpreis der GroupOrder berechnen um zu schauen ob mindestbestellwert überschritten wurde
+            double priceOfAllOrderEntries = 0;
+            List<OrderEntry> allOrderEntries= groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId);
+            for (OrderEntry entry : allOrderEntries) {
+                priceOfAllOrderEntries += entry.getSumPrice();
+            }
+
+
             Set<String> userEmails = new HashSet<>();
             userEmails.add(groupOrder.getCreatorUserEmail());
 
@@ -81,12 +94,27 @@ public class GroupOrderThread extends Thread{
 
             groupOrderService.deleteGroupOrder(groupOrderId);
 
-            for (String email : userEmails) {
-                notificationServer.notifyUser(
-                        email,
-                        "Die GroupOrder " + groupOrderId
-                                + " wurde geschlossen, weil die Ablaufzeit erreicht wurde."
-                );
+
+            if (priceOfAllOrderEntries >= minOrderPrice) {
+                for (String email : userEmails) {
+
+                    notificationServer.notifyUser(
+                            email,
+                            "Die GroupOrder " + groupOrderId + " wurde geschlossen," +
+                                    " weil die Ablaufzeit erreicht wurde." +
+                                    " Die BEstellung wurde erfolgreich aufgegeben."
+                    );
+                }
+            } else {
+                for (String email : userEmails) {
+
+                    notificationServer.notifyUser(
+                            email,
+                            "Die GroupOrder " + groupOrderId + " wurde geschlossen," +
+                                    " weil die Ablaufzeit erreicht wurde." +
+                                    " Die Bestellung konnte nicht aufgegeben werden,da der Mindestbestellwert nicht erreicht wurde."
+                    );
+                }
             }
 
         } catch (InterruptedException exception) {
