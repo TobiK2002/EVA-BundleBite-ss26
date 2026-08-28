@@ -7,16 +7,23 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Component
 public class NotificationServer {
         private final ConcurrentHashMap<String, PrintWriter> connections =
                 new ConcurrentHashMap<>();
+
+    public static final Logger logger = LoggerFactory.getLogger(NotificationServer.class);
 
         @PostConstruct
         public void start() {
             Thread serverThread = new Thread(this::acceptConnections);
             serverThread.setDaemon(true);
             serverThread.start();
+            logger.info("Notification Server wurde erfolgreich gestartet");
         }
 
         private void acceptConnections() {
@@ -50,11 +57,15 @@ public class NotificationServer {
 
                 connections.put(userEmail, out);
 
+                logger.info("Client " + userEmail + " Erfolgreich per Socket verbunden.");
+
                 // Wartet, bis der Client beim Logout die Verbindung schließt.
                 while (in.readLine() != null) {
                 }
 
                 connections.remove(userEmail);
+
+                logger.info("Client " + userEmail + " hat Erfolgreich die Verbindung getrennt");
 
             } catch (IOException ignored) {
             }
@@ -66,5 +77,7 @@ public class NotificationServer {
             if (connection != null) {
                 connection.println(message);
             }
+
+            logger.info("An Client " + email + " Wurde folgende Nachricht gesendet: " + message);
         }
     }
