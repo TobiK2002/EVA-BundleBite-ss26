@@ -13,11 +13,11 @@ public class Restaurant {
     private final UUID id;
     private String name;
     private Address address;
-    private Double minOrderValue;
+    private double minOrderValue;
     private final List<UUID> dishes = new ArrayList<>();
 
 
-    public Restaurant(UUID id, String name, Address address, Double minOrderValue) {
+    public Restaurant(UUID id, String name, Address address, double minOrderValue) {
         this.id = id;
         this.name = name;
         this.address = address;
@@ -25,13 +25,13 @@ public class Restaurant {
 
     }
 
-    public Restaurant(UUID id, String name, String address, Double minOrderValue) {
+    public Restaurant(UUID id, String name, String address, double minOrderValue) {
         this.id = id;
         this.name = name;
         this.address = Address.fromString(address);
         this.minOrderValue = minOrderValue;
     }
-    public Restaurant(UUID id, String name, Address address, Double minOrderValue, List<UUID> dishes) {
+    public Restaurant(UUID id, String name, Address address, double minOrderValue, List<UUID> dishes) {
         this.id = id;
         this.name = name;
         this.address = address;
@@ -50,7 +50,7 @@ public class Restaurant {
     }
 
 
-    public Double getMinOrderValue() {
+    public double getMinOrderValue() {
         return minOrderValue;
     }
 
@@ -65,7 +65,7 @@ public class Restaurant {
     public void setAddress(String address) {
         this.address = Address.fromString(address);
     }
-    public void setMinOrderValue(Double minOrderValue) {
+    public void setMinOrderValue(double minOrderValue) {
         this.minOrderValue = minOrderValue;
     }
     public void addDish(UUID dishId) {

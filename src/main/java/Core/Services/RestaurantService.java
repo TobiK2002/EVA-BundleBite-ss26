@@ -21,7 +21,7 @@ public class RestaurantService {
         this.dishService = dishService;
     }
 
-    public Restaurant createRestaurant(String name, String address, Double minOrderValue) {
+    public Restaurant createRestaurant(String name, String address, double minOrderValue) {
         UUID id = UUID.randomUUID();
         Restaurant restaurant = new Restaurant(id, name, address, minOrderValue);
         saveRestaurant(restaurant);
@@ -102,7 +102,7 @@ public class RestaurantService {
             throw RestaurantException.invalidAddress();
         }
 
-        if (restaurant.getMinOrderValue() == null || restaurant.getMinOrderValue() < 0) {
+        if (restaurant.getMinOrderValue() < 0) {
             throw RestaurantException.invalidMinOrderValue();
         }
     }
@@ -135,7 +135,7 @@ public class RestaurantService {
             UUID restaurantId,
             String name,
             String description,
-            Double price,
+            double price,
             ArrayList<String> ingredients
     ) throws RestaurantException {
 

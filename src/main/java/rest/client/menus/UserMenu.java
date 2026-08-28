@@ -238,7 +238,7 @@ public class UserMenu {
 
             for (ConsoleClient.GroupOrderResponse groupOrder : groupOrders) {
 
-                ConsoleClient.RestaurantResponse restaurant=new ConsoleClient.RestaurantResponse(null,null,null,null);
+                ConsoleClient.RestaurantResponse restaurant=new ConsoleClient.RestaurantResponse(null,null,null,0);
                 try {
                     restaurant = apiClient.get("/restaurants/"+ groupOrder.restaurantId(),ConsoleClient.RestaurantResponse.class);
                 } catch (Exception exception) {
@@ -292,7 +292,7 @@ public class UserMenu {
         for (ConsoleClient.GroupOrderResponse groupOrder : groupOrders) {
 
             //Default Restaurant Response, wenn API Call nicht klappt
-            ConsoleClient.RestaurantResponse restaurant=new ConsoleClient.RestaurantResponse(null,null,null,null);
+            ConsoleClient.RestaurantResponse restaurant=new ConsoleClient.RestaurantResponse(null,null,null,0);
             try {
                 restaurant = apiClient.get("/restaurants/"+ groupOrder.restaurantId(),ConsoleClient.RestaurantResponse.class);
             } catch (Exception exception) {

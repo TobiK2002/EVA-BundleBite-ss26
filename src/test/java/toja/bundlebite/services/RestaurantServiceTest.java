@@ -42,7 +42,7 @@ class RestaurantServiceTest {
             // Arrange
             String name = "Burger Haus";
             String address = "Neue Straße 12 04109 Leipzig";
-            Double minOrderValue = 20.0;
+            double minOrderValue = 20.0;
 
             // Act
             Restaurant restaurant = restaurantService.createRestaurant(
@@ -67,7 +67,7 @@ class RestaurantServiceTest {
             // Arrange
             String invalidName = "";
             String address = "Beispielstraße 24 04109 Leipzig";
-            Double minOrderValue = 15.0;
+            double minOrderValue = 15.0;
 
             // Act & Assert
             RestaurantException exception = assertThrows(
@@ -87,7 +87,7 @@ class RestaurantServiceTest {
             // Arrange
             String name = null;
             String address = "Beispielstraße 24 04109 Leipzig";
-            Double minOrderValue = 15.0;
+            double minOrderValue = 15.0;
 
             // Act & Assert
             RestaurantException exception = assertThrows(
@@ -107,7 +107,7 @@ class RestaurantServiceTest {
             // Arrange
             String name = "Pizza Roma";
             String invalidAddress = "Leipzig";
-            Double minOrderValue = 15.0;
+            double minOrderValue = 15.0;
 
             // Act & Assert
             AddressException exception = assertThrows(
@@ -127,7 +127,7 @@ class RestaurantServiceTest {
             // Arrange
             String name = "Pizza Roma";
             String invalidAddress = "Beispielstraße 24 4109 Leipzig";
-            Double minOrderValue = 15.0;
+            double minOrderValue = 15.0;
 
             // Act & Assert
             AddressException exception = assertThrows(
@@ -141,25 +141,6 @@ class RestaurantServiceTest {
             assertEquals("Invalid postal code", exception.getMessage());
         }
 
-        @Test
-        @DisplayName("Should throw exception for null minimum order value")
-        void shouldThrowExceptionForNullMinOrderValue() {
-            // Arrange
-            String name = "Pizza Roma";
-            String address = "Beispielstraße 24 04109 Leipzig";
-            Double minOrderValue = null;
-
-            // Act & Assert
-            RestaurantException exception = assertThrows(
-                    RestaurantException.class,
-                    () -> restaurantService.createRestaurant(
-                            name,
-                            address,
-                            minOrderValue
-                    )
-            );
-            assertEquals("Invalid minimum order value", exception.getMessage());
-        }
 
         @Test
         @DisplayName("Should throw exception for negative minimum order value")
@@ -167,7 +148,7 @@ class RestaurantServiceTest {
             // Arrange
             String name = "Pizza Roma";
             String address = "Beispielstraße 24 04109 Leipzig";
-            Double minOrderValue = -1.0;
+            double minOrderValue = -1.0;
 
             // Act & Assert
             RestaurantException exception = assertThrows(
@@ -476,7 +457,7 @@ class RestaurantServiceTest {
             assertEquals(testRestaurant.getId(), dish.getRestaurantId());
             assertEquals("Pizza Margherita", dish.getName());
             assertEquals("Klassische Pizza mit Tomaten und Kaese", dish.getDescription());
-            assertEquals(899, dish.getPrice());
+            assertEquals(8.99, dish.getPrice());
             assertEquals(ingredients, dish.getIngredients());
 
             Restaurant restaurant = restaurantService.getRestaurantById(testRestaurant.getId());

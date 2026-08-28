@@ -15,14 +15,14 @@ public class GroupOrderThread extends Thread{
     private final int expiresAtMinutes;
     private final GroupOrderService groupOrderService;
     private final NotificationServer notificationServer;
-    private Double minOrderPrice;
+    private double minOrderPrice;
 
     public GroupOrderThread(
             UUID groupOrderId,
             int expiresAtMinutes,
             GroupOrderService groupOrderService,
             NotificationServer notificationServer,
-            Double minOrderPrice
+            double minOrderPrice
     ) {
         this.groupOrderId = groupOrderId;
         this.expiresAtMinutes = expiresAtMinutes;

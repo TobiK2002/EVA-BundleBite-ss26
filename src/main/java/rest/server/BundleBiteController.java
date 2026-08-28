@@ -192,7 +192,7 @@ public class BundleBiteController {
                 request.expiresAt()
         );
         UUID restaurantId = request.restaurantId();
-        Double minOrderPrice = restaurantService.getRestaurantById(restaurantId).getMinOrderValue();
+        double minOrderPrice = restaurantService.getRestaurantById(restaurantId).getMinOrderValue();
 
         GroupOrderThread groupOrderThread = new GroupOrderThread(
                 groupOrder.getId(),
@@ -343,21 +343,21 @@ public class BundleBiteController {
     public record CreateRestaurantRequest(
             String name,
             String address,
-            Double minOrderValue
+            double minOrderValue
     ) {
     }
 
     public record UpdateRestaurantRequest(
             String name,
             String address,
-            Double minOrderValue
+            double minOrderValue
     ) {
     }
 
     public record CreateDishRequest(
             String name,
             String description,
-            Double price,
+            double price,
             ArrayList<String> ingredients
     ) {
     }
@@ -366,7 +366,7 @@ public class BundleBiteController {
             UUID restaurantId,
             String name,
             String description,
-            Double price,
+            double price,
             ArrayList<String> ingredients
     ) {
     }

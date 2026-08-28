@@ -167,7 +167,7 @@ public class ConsoleClient {
             String address = scanner.nextLine();
 
             System.out.print("Mindestbestellwert: ");
-            Double minOrderValue = Double.parseDouble(scanner.nextLine());
+            double minOrderValue = Double.parseDouble(scanner.nextLine());
 
             CreateRestaurantRequest request = new CreateRestaurantRequest(name, address, minOrderValue);
 
@@ -214,7 +214,7 @@ public class ConsoleClient {
     public record CreateRestaurantRequest(
             String name,
             String address,
-            Double minOrderValue
+            double minOrderValue
     ) {
     }
 
@@ -271,7 +271,7 @@ public class ConsoleClient {
             UUID id,
             String name,
             AddressResponse address,
-            Double minOrderValue
+            double minOrderValue
     ) {
     }
 
