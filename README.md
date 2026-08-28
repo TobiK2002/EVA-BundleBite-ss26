@@ -15,7 +15,7 @@ flowchart TB
             Entries["OrderEntryService"]
         end
 
-        subgraph Memory["In-Memory-Speicher\nConcurrentHashMap"]
+        subgraph Memory["In-Memory-Speicher: Concurrent HashMap"]
             UserStore["Benutzer"]
             RestaurantStore["Restaurants"]
             DishStore["Gerichte"]
