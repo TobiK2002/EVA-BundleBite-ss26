@@ -135,7 +135,7 @@ public class RestaurantService {
             UUID restaurantId,
             String name,
             String description,
-            long price,
+            Double price,
             ArrayList<String> ingredients
     ) throws RestaurantException {
 

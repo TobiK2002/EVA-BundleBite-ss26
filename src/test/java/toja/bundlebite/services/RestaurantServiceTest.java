@@ -466,7 +466,7 @@ class RestaurantServiceTest {
                     testRestaurant.getId(),
                     "Pizza Margherita",
                     "Klassische Pizza mit Tomaten und Kaese",
-                    899,
+                    8.99,
                     ingredients
             );
 
@@ -497,7 +497,7 @@ class RestaurantServiceTest {
                             unknownRestaurantId,
                             "Pizza Margherita",
                             "Klassische Pizza",
-                            899,
+                            8.99,
                             ingredients
                     )
             );
@@ -533,7 +533,7 @@ class RestaurantServiceTest {
                     testRestaurant.getId(),
                     "Pasta Napoli",
                     "Pasta mit Tomatensauce",
-                    799,
+                    7.99,
                     new ArrayList<>(List.of("Pasta", "Tomaten"))
             );
 
@@ -556,7 +556,7 @@ class RestaurantServiceTest {
                     dish.getRestaurantId(),
                     "Pizza Funghi",
                     "Pizza mit Champignons",
-                    999,
+                    9.99,
                     new ArrayList<>(List.of("Teig", "Tomaten", "Kaese", "Champignons"))
             );
 
@@ -583,7 +583,7 @@ class RestaurantServiceTest {
                     dish.getRestaurantId(),
                     "Pizza Salami",
                     "Pizza mit Salami",
-                    999,
+                    9.99,
                     new ArrayList<>(List.of("Teig", "Tomaten", "Salami"))
             );
 
@@ -658,7 +658,7 @@ class RestaurantServiceTest {
                 testRestaurant.getId(),
                 "Pizza Margherita",
                 "Klassische Pizza mit Tomaten und Kaese",
-                899,
+                8.99,
                 new ArrayList<>(List.of("Teig", "Tomaten", "Kaese"))
         );
     }

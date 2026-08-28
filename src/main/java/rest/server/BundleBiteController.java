@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequestMapping("/api")
 public class BundleBiteController {
 
-    private static final Logger logger = LoggerFactory.getLogger(BundleBiteController.class);
+    public static final Logger logger = LoggerFactory.getLogger(BundleBiteController.class);
 
     private final NotificationServer notificationServer;
 
@@ -361,7 +361,7 @@ public class BundleBiteController {
     public record CreateDishRequest(
             String name,
             String description,
-            long price,
+            Double price,
             ArrayList<String> ingredients
     ) {
     }
@@ -370,7 +370,7 @@ public class BundleBiteController {
             UUID restaurantId,
             String name,
             String description,
-            long price,
+            Double price,
             ArrayList<String> ingredients
     ) {
     }
