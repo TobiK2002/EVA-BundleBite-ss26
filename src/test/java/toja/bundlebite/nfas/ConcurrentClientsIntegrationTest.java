@@ -1,4 +1,4 @@
-package toja.bundlebite;
+package toja.bundlebite.nfas;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
