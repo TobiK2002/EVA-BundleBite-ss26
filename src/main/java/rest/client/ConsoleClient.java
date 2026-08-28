@@ -221,7 +221,7 @@ public class ConsoleClient {
     public record CreateDishRequest(
             String name,
             String description,
-            double price,
+            Double price,
             List<String> ingredients
     ) {
     }
@@ -230,7 +230,7 @@ public class ConsoleClient {
             UUID restaurantId,
             String name,
             String description,
-            double price,
+            Double price,
             List<String> ingredients
     ) {
     }
@@ -280,7 +280,7 @@ public class ConsoleClient {
             UUID restaurantId,
             String name,
             String description,
-            double price,
+            long price,
             List<String> ingredients
     ) {
     }
