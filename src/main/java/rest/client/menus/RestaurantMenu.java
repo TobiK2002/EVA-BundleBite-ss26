@@ -96,8 +96,8 @@ public class RestaurantMenu {
             System.out.print("Beschreibung: ");
             String description = scanner.nextLine();
 
-            System.out.print("Preis in Cent: ");
-            long price = Long.parseLong(scanner.nextLine());
+            System.out.print("Preis (Format: [Euro].[Cent]): ");
+            double price = Double.parseDouble(scanner.nextLine());
 
             System.out.print("Zutaten kommagetrennt: ");
             List<String> ingredients = List.of(scanner.nextLine().split(","));
