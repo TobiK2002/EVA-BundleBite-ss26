@@ -162,12 +162,27 @@ public class RestaurantMenu {
 
     private void deleteDish() {
         try {
+
             System.out.print("Dish-ID: ");
             UUID dishId = UUID.fromString(scanner.nextLine());
-
-            apiClient.delete("/dishes/" + dishId);
-
-            System.out.println("Gericht wurde gelöscht.");
+            //Schauen ob Gericht in einer Bestellung vorhanden ist
+            List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders", new TypeReference<>() {});
+            if (groupOrders.isEmpty()) {
+                apiClient.delete("/dishes/" + dishId);
+                System.out.println("Gericht wurde gelöscht.");
+            }
+            else {
+                for (ConsoleClient.GroupOrderResponse groupOrder : groupOrders) {
+                    List<ConsoleClient.OrderEntryResponse> orderEntries = apiClient.getList("/order-entries/by-group-order/" + groupOrder.id(), new TypeReference<>() {
+                    });
+                    if (orderEntries.stream().anyMatch(orderEntry -> orderEntry.dishId().equals(dishId))) {
+                        System.out.println("Gericht kann nicht Gelöscht werden, da es in einer Bestellung vorhanden ist.");
+                        return;
+                    }
+                }
+                apiClient.delete("/dishes/" + dishId);
+                System.out.println("Gericht wurde gelöscht.");
+            }
         } catch (Exception exception) {
             System.out.println("Gericht konnte nicht gelöscht werden: " + exception.getMessage());
         }
