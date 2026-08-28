@@ -380,7 +380,7 @@ class GroupOrderServiceTest {
                 anotherRestaurant.getId(),
                 "Burger",
                 "Burger mit Kaese",
-                999,
+                9.99,
                 new ArrayList<>(List.of("Brot", "Patty", "Kaese"))
         );
 
@@ -442,7 +442,7 @@ class GroupOrderServiceTest {
                         testRestaurant.getId(),
                         "Pasta Napoli",
                         "Pasta mit Tomatensauce",
-                        799,
+                        7.99,
                         new ArrayList<>(List.of("Pasta", "Tomaten"))
                 ).getId(),
                 1
@@ -601,7 +601,7 @@ class GroupOrderServiceTest {
                 testRestaurant.getId(),
                 "Pizza Margherita",
                 "Klassische Pizza mit Tomaten und Kaese",
-                899,
+                8.99,
                 new ArrayList<>(List.of("Teig", "Tomaten", "Kaese"))
         );
     }
