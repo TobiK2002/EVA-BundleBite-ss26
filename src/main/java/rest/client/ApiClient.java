@@ -11,9 +11,10 @@ import java.util.List;
 
 public class ApiClient {
 
-
-    private static final String BASE_URL =
+    private static final String DEFAULT_BASE_URL =
             "http://localhost:8080/api";
+
+    private final String baseUrl;
 
     private final HttpClient httpClient =
             HttpClient.newHttpClient();
@@ -21,11 +22,17 @@ public class ApiClient {
     private final ObjectMapper objectMapper =
             new ObjectMapper();
 
+    public ApiClient() {
+        this(DEFAULT_BASE_URL);
+    }
 
+    public ApiClient(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
 
-    public  <T> T get(String path, Class<T> responseType) throws IOException, InterruptedException {
+    public <T> T get(String path, Class<T> responseType) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + path))
+                .uri(URI.create(baseUrl + path))
                 .GET()
                 .build();
 
@@ -38,7 +45,7 @@ public class ApiClient {
 
     public <T> List<T> getList(String path, TypeReference<List<T>> responseType) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + path))
+                .uri(URI.create(baseUrl + path))
                 .GET()
                 .build();
 
@@ -53,7 +60,7 @@ public class ApiClient {
         String json = objectMapper.writeValueAsString(body);
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + path))
+                .uri(URI.create(baseUrl + path))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
@@ -69,7 +76,7 @@ public class ApiClient {
         String json = objectMapper.writeValueAsString(body);
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + path))
+                .uri(URI.create(baseUrl + path))
                 .header("Content-Type", "application/json")
                 .PUT(HttpRequest.BodyPublishers.ofString(json))
                 .build();
@@ -81,7 +88,7 @@ public class ApiClient {
 
     public void delete(String path) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + path))
+                .uri(URI.create(baseUrl + path))
                 .DELETE()
                 .build();
 
