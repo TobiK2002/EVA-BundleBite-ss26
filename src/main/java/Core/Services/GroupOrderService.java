@@ -70,6 +70,17 @@ public class GroupOrderService {
         return allGroupOrdersWithSamePostal;
     }
 
+    public List<GroupOrder> getAllGroupOrdersWithSameRestaurant(UUID restaurantId) {
+        List<GroupOrder> allGroupOrderds = getAllGroupOrders();
+        List<GroupOrder> groupOrdersByRestaurant = new ArrayList<>();
+        for (GroupOrder groupOrder : allGroupOrderds) {
+            if (groupOrder.getRestaurantId().equals(restaurantId)) {
+                groupOrdersByRestaurant.add(groupOrder);
+            }
+        }
+        return groupOrdersByRestaurant;
+    }
+
     public void deleteGroupOrder(UUID id) {
         ReentrantLock lock = getLock(id);
         lock.lock();

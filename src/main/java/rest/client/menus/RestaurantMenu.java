@@ -166,13 +166,13 @@ public class RestaurantMenu {
             System.out.print("Dish-ID: ");
             UUID dishId = UUID.fromString(scanner.nextLine());
             //Schauen ob Gericht in einer Bestellung vorhanden ist
-            List<ConsoleClient.GroupOrderResponse> groupOrders = apiClient.getList("/group-orders", new TypeReference<>() {});
-            if (groupOrders.isEmpty()) {
+            List<ConsoleClient.GroupOrderResponse> groupOrdersByRestaurant = apiClient.getList("/group-orders/by-restaurant/" + loggedInRestaurantId, new TypeReference<>() {});
+            if (groupOrdersByRestaurant.isEmpty()) {
                 apiClient.delete("/dishes/" + dishId);
                 System.out.println("Gericht wurde gelöscht.");
             }
             else {
-                for (ConsoleClient.GroupOrderResponse groupOrder : groupOrders) {
+                for (ConsoleClient.GroupOrderResponse groupOrder : groupOrdersByRestaurant) {
                     List<ConsoleClient.OrderEntryResponse> orderEntries = apiClient.getList("/order-entries/by-group-order/" + groupOrder.id(), new TypeReference<>() {
                     });
                     if (orderEntries.stream().anyMatch(orderEntry -> orderEntry.dishId().equals(dishId))) {

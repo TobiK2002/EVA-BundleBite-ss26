@@ -85,6 +85,7 @@ class GroupOrderNotificationLatencyIntegrationTest {
                     () -> "Die Socket-Benachrichtigung benötigte "
                             + TimeUnit.NANOSECONDS.toMillis(elapsedNanos)
                             + " ms und überschreitet damit 0,5 Sekunden");
+            System.out.println(elapsedNanos);
         }
     }
 

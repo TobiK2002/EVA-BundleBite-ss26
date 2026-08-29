@@ -217,6 +217,11 @@ public class BundleBiteController {
     @GetMapping("/group-orders/by-postal/{postalCode}")
     public List<GroupOrder> getGroupOrdersByPostal(@PathVariable String postalCode) {return groupOrderService.getAllGroupOrdersWithSamePostalCode(postalCode);}
 
+    @GetMapping("group-orders/by-restaurant/{restaurant_id}")
+    public List<GroupOrder> getGroupOrdersByRestaurant(@PathVariable UUID restaurant_id) {
+        return groupOrderService.getAllGroupOrdersWithSameRestaurant(restaurant_id);
+    }
+
     @GetMapping("/group-orders/{groupOrderId}")
     public GroupOrder getGroupOrderById(@PathVariable UUID groupOrderId) {
         return groupOrderService.getGroupOrderById(groupOrderId);
