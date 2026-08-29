@@ -3,10 +3,12 @@ package toja.bundlebite.nfas;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import rest.client.ApiClient;
 import rest.client.ConsoleClient;
+import rest.server.NotificationServer;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -18,25 +20,27 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Integrationstest zur nichtfunktionalen Anforderung: Änderungen an einer GroupOrder
- * werden innerhalb von 0,5 Sekunden per TCP-Socket an betroffene Clients übertragen.
+ * Prüft, ob eine Änderung einer GroupOrder innerhalb von 0,5 Sekunden
+ * als TCP-Socket-Nachricht beim beteiligten Client ankommt.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "notification.server.port=0"
+)
 class GroupOrderNotificationLatencyIntegrationTest {
 
-    private static final int NOTIFICATION_PORT = 8081;
+    private static final int SOCKET_READ_TIMEOUT_MILLIS = 1_000;
     private static final long MAX_NOTIFICATION_LATENCY_MILLIS = 500;
-    private static final int SOCKET_READ_TIMEOUT_MILLIS = 2_000;
-    private static final String ENTRY_ADDED_NOTIFICATION =
-            "Es wurde ein Bestelleintrag zur GroupOrder hinzugefügt.";
 
     @LocalServerPort
     private int port;
+
+    @Autowired
+    private NotificationServer notificationServer;
 
     private ApiClient apiClient;
     private UUID restaurantId;
@@ -46,48 +50,41 @@ class GroupOrderNotificationLatencyIntegrationTest {
 
     @Test
     @Timeout(value = 10, unit = TimeUnit.SECONDS)
-    void groupOrderChangeIsReceivedByExistingMemberViaSocketWithinHalfASecond() throws Exception {
+    void notificationReachesExistingGroupOrderMemberWithinHalfASecond() throws Exception {
         apiClient = new ApiClient("http://localhost:" + port + "/api");
         UUID dishId = createRestaurantAndDish();
-        createClients();
+        createUsers();
         groupOrderId = createGroupOrder();
 
-        try (Socket clientBSocket = new Socket("localhost", NOTIFICATION_PORT);
-             BufferedWriter clientBWriter = new BufferedWriter(new OutputStreamWriter(
-                     clientBSocket.getOutputStream(), StandardCharsets.UTF_8));
-             BufferedReader clientBReader = new BufferedReader(new InputStreamReader(
-                     clientBSocket.getInputStream(), StandardCharsets.UTF_8))) {
+        // B ist bereits Mitglied der GroupOrder, bevor die Socket-Verbindung geöffnet wird.
+        addOrderEntry(clientBEmail, dishId, 1);
 
-            clientBSocket.setSoTimeout(SOCKET_READ_TIMEOUT_MILLIS);
-            registerSocketClient(clientBWriter, clientBEmail);
+        try (Socket socket = new Socket("localhost", waitForNotificationServerPort());
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+                     socket.getOutputStream(), StandardCharsets.UTF_8));
+             BufferedReader reader = new BufferedReader(new InputStreamReader(
+                     socket.getInputStream(), StandardCharsets.UTF_8))) {
 
-            // Client B besitzt bereits einen Entry und die Nachricht bestätigt,
-            // dass seine Socket-Verbindung vollständig beim Server registriert ist.
-            apiClient.post(
-                    "/group-orders/" + groupOrderId + "/order-entries",
-                    new ConsoleClient.CreateOrderEntryRequest(clientBEmail, dishId, 1),
-                    ConsoleClient.OrderEntryResponse.class
-            );
-            assertEquals(ENTRY_ADDED_NOTIFICATION, clientBReader.readLine(),
-                    "Client B muss für seinen bestehenden Entry verbunden sein");
+            socket.setSoTimeout(SOCKET_READ_TIMEOUT_MILLIS);
+            writer.write(clientBEmail);
+            writer.newLine();
+            writer.flush();
+
+            assertTrue(waitForClientBRegistration(),
+                    "Client B wurde nicht beim NotificationServer registriert");
 
             long startNanos = System.nanoTime();
-            apiClient.post(
-                    "/group-orders/" + groupOrderId + "/order-entries",
-                    new ConsoleClient.CreateOrderEntryRequest(clientAEmail, dishId, 1),
-                    ConsoleClient.OrderEntryResponse.class
-            );
-            String notification = clientBReader.readLine();
+            addOrderEntry(clientAEmail, dishId, 1);
+            String notification = reader.readLine();
             long elapsedNanos = System.nanoTime() - startNanos;
 
             assertNotNull(notification, "Client B muss eine Socket-Benachrichtigung erhalten");
-            assertEquals(ENTRY_ADDED_NOTIFICATION, notification);
+            assertTrue(notification.contains("Es wurde ein Bestelleintrag zur GroupOrder hinzugefügt."),
+                    "Die empfangene Nachricht muss die Änderung der GroupOrder beschreiben");
             assertTrue(elapsedNanos < TimeUnit.MILLISECONDS.toNanos(MAX_NOTIFICATION_LATENCY_MILLIS),
-                    () -> "Socket-Benachrichtigung benötigte "
+                    () -> "Die Socket-Benachrichtigung benötigte "
                             + TimeUnit.NANOSECONDS.toMillis(elapsedNanos)
                             + " ms und überschreitet damit 0,5 Sekunden");
-            System.out.println("#########################################\n\n Latenz: " + TimeUnit.NANOSECONDS.toMillis(elapsedNanos)+ " Millisekunden \n\n#########################################");
-
         }
     }
 
@@ -128,15 +125,16 @@ class GroupOrderNotificationLatencyIntegrationTest {
         ).id();
     }
 
-    private void createClients() throws Exception {
+    private void createUsers() throws Exception {
         clientAEmail = "socket-client-a-" + UUID.randomUUID() + "@example.test";
         clientBEmail = "socket-client-b-" + UUID.randomUUID() + "@example.test";
+        createUser("Socket Client A", clientAEmail);
+        createUser("Socket Client B", clientBEmail);
+    }
 
-        apiClient.post("/users", new ConsoleClient.CreateUserRequest(
-                "Socket Client A", clientAEmail, "Teststraße 1 04109 Leipzig"),
-                ConsoleClient.UserResponse.class);
-        apiClient.post("/users", new ConsoleClient.CreateUserRequest(
-                "Socket Client B", clientBEmail, "Teststraße 1 04109 Leipzig"),
+    private void createUser(String name, String email) throws Exception {
+        apiClient.post("/users",
+                new ConsoleClient.CreateUserRequest(name, email, "Teststraße 1 04109 Leipzig"),
                 ConsoleClient.UserResponse.class);
     }
 
@@ -148,9 +146,38 @@ class GroupOrderNotificationLatencyIntegrationTest {
         ).id();
     }
 
-    private void registerSocketClient(BufferedWriter writer, String email) throws Exception {
-        writer.write(email);
-        writer.newLine();
-        writer.flush();
+    private void addOrderEntry(String email, UUID dishId, int quantity) throws Exception {
+        apiClient.post(
+                "/group-orders/" + groupOrderId + "/order-entries",
+                new ConsoleClient.CreateOrderEntryRequest(email, dishId, quantity),
+                ConsoleClient.OrderEntryResponse.class
+        );
+    }
+
+    private boolean waitForClientBRegistration() throws InterruptedException {
+        long timeoutNanos = TimeUnit.SECONDS.toNanos(2);
+        long startNanos = System.nanoTime();
+
+        while (System.nanoTime() - startNanos < timeoutNanos) {
+            if (notificationServer.isClientConnected(clientBEmail)) {
+                return true;
+            }
+            Thread.sleep(10);
+        }
+        return false;
+    }
+
+    private int waitForNotificationServerPort() throws InterruptedException {
+        long timeoutNanos = TimeUnit.SECONDS.toNanos(2);
+        long startNanos = System.nanoTime();
+
+        while (System.nanoTime() - startNanos < timeoutNanos) {
+            int port = notificationServer.getListeningPort();
+            if (port > 0) {
+                return port;
+            }
+            Thread.sleep(10);
+        }
+        throw new IllegalStateException("NotificationServer wurde nicht gestartet");
     }
 }

@@ -244,17 +244,8 @@ public class BundleBiteController {
                 request.dishId(),
                 request.quantity()
         );
-        GroupOrder groupOrder = groupOrderService.getGroupOrderById(groupOrderId);
-        //Alle User benachrichtigen
-        Set<String> userEmails = new HashSet<>();
-        for (OrderEntry entry : groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId)) {
-            userEmails.add(entry.getUserEmail());
-        }
-        for (String email : userEmails) {
-            notificationServer.notifyUser(
-                    email, "Es wurde ein Bestelleintrag zur GroupOrder hinzugefügt."
-            );
-        }
+
+        notifyAllUsersInGroupOrder(groupOrderId,"Es wurde ein Bestelleintrag zur GroupOrder hinzugefügt.");
         return orderEntry;
     }
 
@@ -289,6 +280,7 @@ public class BundleBiteController {
                 orderEntryId,
                 request.quantity()
         );
+        notifyAllUsersInGroupOrder(groupOrderId,"Es wurde ein Eintrag in der GroupOrder aktualisiert.");
     }
 
     @DeleteMapping("/group-orders/{groupOrderId}/order-entries/{orderEntryId}")
@@ -298,16 +290,8 @@ public class BundleBiteController {
     ) {
         groupOrderService.deleteOrderEntry(groupOrderId, orderEntryId);
 
-        //Alle User, welche Entries in der Bestellung haben, benachrichtigen
-        Set<String> userEmails = new HashSet<>();
-        for (OrderEntry entry : groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId)) {
-            userEmails.add(entry.getUserEmail());
-        }
-        for (String email : userEmails) {
-            notificationServer.notifyUser(
-                    email, "Es wurde ein Bestelleintrag in GroupOrder " + groupOrderId + " gelöscht."
-            );
-        }
+        //Alle User, welche Entries in der Bestellung haben, benachrichtigen über Löschung
+        notifyAllUsersInGroupOrder(groupOrderId,"Es wurde ein Eintrag in der GroupOrder gelöscht.");
     }
 
     //
@@ -319,6 +303,17 @@ public class BundleBiteController {
 
         if (groupOrderThread != null) {
             groupOrderThread.interrupt();
+        }
+    }
+    private void notifyAllUsersInGroupOrder(UUID groupOrderId, String message) {
+        Set<String> userEmails = new HashSet<>();
+        for (OrderEntry entry : groupOrderService.getAllOrderEntriesForGroupOrder(groupOrderId)) {
+            userEmails.add(entry.getUserEmail());
+        }
+        for (String email : userEmails) {
+            notificationServer.notifyUser(
+                    email, " GroupOrder-ID: " + groupOrderId  + message
+            );
         }
     }
 

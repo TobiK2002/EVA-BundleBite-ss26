@@ -1,5 +1,6 @@
 package rest.server;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -13,6 +14,11 @@ import org.slf4j.LoggerFactory;
 
 @Component
 public class NotificationServer {
+        @Value("${notification.server.port:8081}")
+        private int configuredPort;
+
+        private volatile int listeningPort;
+
         private final ConcurrentHashMap<String, PrintWriter> connections =
                 new ConcurrentHashMap<>();
 
@@ -27,7 +33,8 @@ public class NotificationServer {
         }
 
         private void acceptConnections() {
-            try (ServerSocket serverSocket = new ServerSocket(8081)) {
+            try (ServerSocket serverSocket = new ServerSocket(configuredPort)) {
+                listeningPort = serverSocket.getLocalPort();
 
                 while (true) {
                     Socket socket = serverSocket.accept();
@@ -57,6 +64,7 @@ public class NotificationServer {
 
                 connections.put(userEmail, out);
 
+
                 logger.info("Client " + userEmail + " Erfolgreich per Socket verbunden.");
 
                 // Wartet, bis der Client beim Logout die Verbindung schließt.
@@ -79,5 +87,13 @@ public class NotificationServer {
             }
 
             logger.info("An Client " + email + " Wurde folgende Nachricht gesendet: " + message);
+        }
+
+        public boolean isClientConnected(String email) {
+            return connections.containsKey(email);
+        }
+
+        public int getListeningPort() {
+            return listeningPort;
         }
     }

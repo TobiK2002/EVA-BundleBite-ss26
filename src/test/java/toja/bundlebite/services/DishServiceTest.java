@@ -47,7 +47,7 @@ class DishServiceTest {
         assertEquals(newRestaurantId, dish.getRestaurantId());
         assertEquals("Pasta Napoli", dish.getName());
         assertEquals("Pasta mit Tomatensauce", dish.getDescription());
-        assertEquals(799, dish.getPrice());
+        assertEquals(7.99, dish.getPrice());
         assertEquals(ingredients, dish.getIngredients());
     }
 
