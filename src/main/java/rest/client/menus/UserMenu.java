@@ -182,6 +182,7 @@ public class UserMenu {
                 System.out.println("Zutaten: " + dish.ingredients());
                 index ++;
             }
+            System.out.println("Bitte Gericht-Index wählen: ");
             int chosenIndex = Integer.parseInt(scanner.nextLine());
             UUID chosenId = dishes.get(chosenIndex).id();
             return chosenId;
@@ -349,6 +350,7 @@ public class UserMenu {
             //Wenn GroupOrders existieren
             if (groupOrderId == null) {
                 showAllGroupOrdersWithIndex (groupOrders);
+                System.out.println("Bitte wähle eine GroupOrder, zu der du einen Eintrag hinzufügen möchtest.\n");
                 System.out.print("GroupOrder-Zahl für Menüauswahl: ");
                 groupOrderId=groupOrders.get(Integer.parseInt(scanner.nextLine())).id();
             }
@@ -400,7 +402,7 @@ public class UserMenu {
                 return null;
             }
 
-            System.out.println("Bitte wähle den Index der GroupOrder (0 - " + (myGroupOrders.size()-1) + " für die du deine Entries anzeigen willst: ");
+            System.out.println("Bitte wähle den Index der GroupOrder (0 - " + (myGroupOrders.size()-1) + ") für die du deine Entries anzeigen willst: ");
             int chosenIndex = -1;
             while (chosenIndex < 0 || chosenIndex >= myGroupOrders.size()) {
                 try { chosenIndex = Integer.parseInt(scanner.nextLine()); } catch (NumberFormatException e) { chosenIndex = -1; }
@@ -490,19 +492,37 @@ public class UserMenu {
         }
         try {
             //OrderEntries des Users für ausgewählte GroupOrder anzeigen und Auswählen
-            List<ConsoleClient.OrderEntryResponse> myOrderEntriesForMyGroupOrder = showOrderEntriesByUserByGroupOrder();
-            if (myOrderEntriesForMyGroupOrder == null) {
+            List<ConsoleClient.OrderEntryResponse> myOrderEntriesForMyGroupOrder = apiClient.getList("/group-orders/with-email/"+ chosenGroupOrderId + "/order-entries/" + this.loggedInUser.email(), new TypeReference<>() {});
+            if (myOrderEntriesForMyGroupOrder == null || myOrderEntriesForMyGroupOrder.isEmpty()) {
                 return;
             }
+            System.out.println("Folgende Bestellungseinträge existieren für dich in der GroupOrder:\n ");
+            for (ConsoleClient.OrderEntryResponse orderEntry : myOrderEntriesForMyGroupOrder) {
+                System.out.println();
+                System.out.println("Index für die Auswahl: "+ myOrderEntriesForMyGroupOrder.indexOf(orderEntry));
+                System.out.println("ID: " + orderEntry.id());
+                System.out.println("Gericht-ID: " + orderEntry.dishId());
+                try {
+                    ConsoleClient.DishResponse dish = apiClient.get("/dishes/" + orderEntry.dishId(), ConsoleClient.DishResponse.class);
+                    System.out.println("Name: " + dish.name());
+                    System.out.println("Preis: " + dish.price());
+                    System.out.println("Zutaten: " + dish.ingredients());
+                    System.out.println("Beschreibung: " + dish.description());
+                } catch (Exception exception) {System.out.println("Gerichtsname konnte nicht geladen werden: " + exception.getMessage());}
+                System.out.println("Menge: " + orderEntry.quantity());
+                System.out.println("Gesamtpreis des Eintrags: " + orderEntry.sumPrice());
+            }
+
+
             int chosenIndex = -1;
             while (chosenIndex < 0 || chosenIndex >= myOrderEntriesForMyGroupOrder.size()) {
+                System.out.println("Bitte gib den Index des Bestellungseintrags ein, welchen du löschen möchtest: ");
                 try {
                     chosenIndex = Integer.parseInt(scanner.nextLine());
                 } catch (NumberFormatException e) {
                     chosenIndex = -1;
                 }
             }
-            chosenIndex = Integer.parseInt(scanner.nextLine());
             chosenOrderEntryId = myOrderEntriesForMyGroupOrder.get(chosenIndex).id();
         } catch (Exception exception) {
             System.out.println("Fehler beim Anzeigen oder Auswählen der OrderEntries deiner ausgewählten GroupOrder: " + exception.getMessage());
