@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ConcurrentClientsIntegrationTest {
 
-    private static final int CLIENT_COUNT = 50;
+    private static final int CLIENT_COUNT = 500;
 
     @LocalServerPort
     private int port;

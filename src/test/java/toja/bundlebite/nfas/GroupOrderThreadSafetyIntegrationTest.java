@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class GroupOrderThreadSafetyIntegrationTest {
 
-    private static final int USER_COUNT = 6;
+    private static final int USER_COUNT = 50;
 
     @LocalServerPort
     private int port;
