@@ -39,7 +39,23 @@ public class ConsoleClient {
 
         while (running) {
             System.out.println();
-            System.out.println("Willkommen bei BundleBite!");
+            System.out.println(
+                    "╔══════════════════════════════════════╗\n" +
+                    "║            BUNDLEBITE                ║\n" +
+                    "║   Entwicklung verteilter Anwendungen ║\n" +
+                    "╚══════════════════════════════════════╝\n" +
+                    "\n" +
+                    "Willkommen bei BundleBite!\n" +
+                    "Hunger erkannt:\n Starte Bestellservice-Notfallprotokoll ...\n" +
+                    "\n" +
+                    "REST-Service      ............ OK\n" +
+                    "WebSocket         ............ OK\n" +
+                    "Multithreading    ............ OK\n" +
+                    "Atomicity         ............ OK\n" +
+                    "Thread Safety     ............ ?\n" +
+                    "\n" +
+                    "Client gestartet.\n" +
+                    "Bitte bestell verantwortungsvoll.\n");
             System.out.println("Bist du User oder Restaurant?");
             System.out.println("1. User");
             System.out.println("2. Restaurant");
