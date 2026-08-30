@@ -17,7 +17,7 @@ BundleBite ist eine kleine Spring‑Boot‑Anwendung (Java 17 / Spring Boot 4), 
 ### Wie die Komponenten zusammenwirken
 Anfragen vom Konsolen‑Client laufen über die REST API in die Service‑Schicht, die die Domänenmodelle (User, Restaurant, Dish, GroupOrder, OrderEntry) manipuliert. Änderungen werden in den In‑Memory‑Stores gehalten; der GroupOrderThread prüft Fristen und löst bei Bedarf Benachrichtigungen über den NotificationServer aus.
 
-### Architektur 
+### Architektur-Abbildung
 ```mermaid
 flowchart TB
     Console["Konsolen-Client\n(ConsoleClient / Menüs)"]
